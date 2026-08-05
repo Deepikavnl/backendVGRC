@@ -11,16 +11,21 @@ import com.tspmquestionmaster.mapper.AssessmentMapper;
 import com.tspmquestionmaster.repository.EntityAssessmentRepository;
 import com.tspmquestionmaster.repository.ThirdPartyEntityRepository;
 import com.tspmquestionmaster.service.AssessmentService;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
+
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class AssessmentServiceImpl implements AssessmentService {
+
 
     private final EntityAssessmentRepository entityAssessmentRepository;
 
@@ -29,16 +34,20 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final AssessmentMapper mapper;
 
 
+
     @Override
     public AssessmentResponse createAssessment(
-            CreateAssessmentRequest request) {
+            CreateAssessmentRequest request
+    ) {
 
         if (entityAssessmentRepository.existsByCode(request.getCode())) {
 
             throw new DuplicateResourceException(
-                    "Assessment code already exists : " + request.getCode()
+                    "Assessment code already exists : "
+                            + request.getCode()
             );
         }
+
 
         ThirdPartyEntity entity =
                 entityRepository.findById(request.getEntityId())
@@ -46,32 +55,60 @@ public class AssessmentServiceImpl implements AssessmentService {
                                 new ResourceNotFoundException(
                                         "Entity not found : "
                                                 + request.getEntityId()
-                                ));
+                                )
+                        );
 
 
         EntityAssessment assessment =
-                mapper.toEntity(request, entity);
+                mapper.toEntity(
+                        request,
+                        entity
+                );
+
+
+        // Generate assessment token for vendor access
+        assessment.setAssessmentToken(
+                UUID.randomUUID().toString()
+        );
+
+
+        if (assessment.getStatus() == null) {
+            assessment.setStatus("PENDING");
+        }
+
+
+        if (assessment.getProgress() == null) {
+            assessment.setProgress(0);
+        }
 
 
         EntityAssessment saved =
-                entityAssessmentRepository.save(assessment);
+                entityAssessmentRepository.save(
+                        assessment
+                );
 
 
         return mapper.toResponse(saved);
     }
 
+
+
+
     @Override
     public AssessmentResponse updateAssessment(
             Long id,
-            UpdateAssessmentRequest request) {
+            UpdateAssessmentRequest request
+    ) {
 
 
         EntityAssessment assessment =
                 entityAssessmentRepository.findById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Assessment not found : " + id
-                                ));
+                                        "Assessment not found : "
+                                                + id
+                                )
+                        );
 
 
 
@@ -93,7 +130,8 @@ public class AssessmentServiceImpl implements AssessmentService {
                                 new ResourceNotFoundException(
                                         "Entity not found : "
                                                 + request.getEntityId()
-                                ));
+                                )
+                        );
 
 
 
@@ -104,11 +142,15 @@ public class AssessmentServiceImpl implements AssessmentService {
         );
 
 
+
         EntityAssessment updated =
-                entityAssessmentRepository.save(assessment);
+                entityAssessmentRepository.save(
+                        assessment
+                );
 
 
         return mapper.toResponse(updated);
+
     }
 
 
@@ -116,19 +158,25 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public AssessmentResponse getAssessmentById(Long id) {
+    public AssessmentResponse getAssessmentById(
+            Long id
+    ) {
 
 
         EntityAssessment assessment =
                 entityAssessmentRepository.findById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Assessment not found : " + id
-                                ));
+                                        "Assessment not found : "
+                                                + id
+                                )
+                        );
 
 
         return mapper.toResponse(assessment);
+
     }
+
 
 
 
@@ -142,7 +190,9 @@ public class AssessmentServiceImpl implements AssessmentService {
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
+
     }
+
 
 
 
@@ -150,13 +200,15 @@ public class AssessmentServiceImpl implements AssessmentService {
     @Override
     @Transactional(readOnly = true)
     public List<AssessmentResponse> getAssessmentsByEntity(
-            Long entityId) {
+            Long entityId
+    ) {
 
 
         return entityAssessmentRepository.findByEntityId(entityId)
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
+
     }
 
 
@@ -164,18 +216,25 @@ public class AssessmentServiceImpl implements AssessmentService {
 
 
     @Override
-    public void deleteAssessment(Long id) {
+    public void deleteAssessment(
+            Long id
+    ) {
 
 
         EntityAssessment assessment =
                 entityAssessmentRepository.findById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Assessment not found : " + id
-                                ));
+                                        "Assessment not found : "
+                                                + id
+                                )
+                        );
 
 
-        entityAssessmentRepository.delete(assessment);
+        entityAssessmentRepository.delete(
+                assessment
+        );
+
     }
 
 }

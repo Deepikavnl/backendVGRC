@@ -1,6 +1,5 @@
 package com.tspmquestionmaster.repository;
 
-import com.tspmquestionmaster.entity.EntityAssessment;
 import com.tspmquestionmaster.entity.Question;
 import com.tspmquestionmaster.entity.Topic;
 import com.tspmquestionmaster.enums.QuestionStatus;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
@@ -20,6 +20,9 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByStatus(QuestionStatus status);
 
     List<Question> findByTopic(Topic topic);
+
+    // ✅ Add this method
+    List<Question> findByTopicId(Long topicId);
 
     List<Question> findByQuestionType(QuestionType questionType);
 
@@ -37,13 +40,5 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             QuestionType questionType
     );
 
-    long countByTopicId(Long topicId);   // <-- Add this
-
-    @Repository
-    interface EntityAssessmentRepository
-            extends JpaRepository<EntityAssessment, Long> {
-
-        List<EntityAssessment> findByEntityId(Long entityId);
-
-    }
+    long countByTopicId(Long topicId);
 }

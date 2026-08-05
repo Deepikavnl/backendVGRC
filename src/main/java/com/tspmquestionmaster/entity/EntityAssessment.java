@@ -39,6 +39,12 @@ public class EntityAssessment extends BaseEntity {
     @Column(name = "score")
     private Integer score;
 
+    @Column(name = "assessment_token", unique = true, length = 100)
+    private String assessmentToken;
+
+    @Column(name = "reviewer_comment", length = 3000)
+    private String reviewerComment;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entity_id", nullable = false)
     private ThirdPartyEntity entity;
