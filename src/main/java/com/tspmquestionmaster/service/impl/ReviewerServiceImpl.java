@@ -264,7 +264,13 @@ public class ReviewerServiceImpl implements ReviewerService {
                     answer.getQuestion()
                             .getQuestionText()
             );
-
+            if (answer.getQuestion().getTopic() != null) {
+                dto.setTopic(
+                        answer.getQuestion()
+                                .getTopic()
+                                .getName()
+                );
+            }
 
             dto.setAnswerValue(
                     answer.getAnswerValue()

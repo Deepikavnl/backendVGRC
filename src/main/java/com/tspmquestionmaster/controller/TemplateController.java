@@ -69,5 +69,21 @@ public class TemplateController {
 
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/{id}/clone")
+    public ResponseEntity<TemplateResponse> cloneTemplate(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                templateService.cloneTemplate(id)
+        );
+    }
 
+    @PutMapping("/{id}/publish")
+    public ResponseEntity<TemplateResponse> publishTemplate(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                templateService.publishTemplate(id)
+        );
+    }
 }

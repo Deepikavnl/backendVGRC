@@ -2,16 +2,22 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PageHeader } from "@/components/common/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 import { createEntity } from "@/services/entityService";
-
 
 export function EntityFormPage() {
 
     const navigate = useNavigate();
-
 
     const [formData, setFormData] = useState({
 
@@ -20,33 +26,34 @@ export function EntityFormPage() {
         category: "",
         country: "",
         website: "",
+        description: "",
         criticality: "",
         riskRating: "",
-        complianceScore: 0,
-        assessmentCount: 0,
-        openFindings: 0,
         status: "",
-        spend: 0
+        spend: ""
 
     });
 
-
-
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
 
-        setFormData({
+        const { name, value } = e.target;
 
-            ...formData,
+        setFormData((prev) => ({
 
-            [e.target.name]: e.target.value
+            ...prev,
 
-        });
+            [name]:
+                name === "spend"
+                    ? value === ""
+                        ? ""
+                        : Number(value)
+                    : value,
+
+        }));
 
     };
-
-
 
     const handleSubmit = async (
         e: React.FormEvent
@@ -54,24 +61,17 @@ export function EntityFormPage() {
 
         e.preventDefault();
 
-
         try {
 
             await createEntity(formData);
 
-
             alert("Entity created successfully");
-
 
             navigate("/entities");
 
+        } catch (error) {
 
-        } catch(error) {
-
-            console.log(
-                "Create Entity Error:",
-                error
-            );
+            console.error(error);
 
             alert("Failed to create entity");
 
@@ -79,180 +79,317 @@ export function EntityFormPage() {
 
     };
 
-
-
     return (
 
         <>
 
             <PageHeader
-
                 title="Create Entity"
-
-                description="Add new third party entity"
-
+                description="Register a new Third-Party Vendor / Supplier"
                 breadcrumbs={[
-                    {
-                        label:"Entities"
-                    },
-                    {
-                        label:"Create"
-                    }
+                    { label: "Entities" },
+                    { label: "Create" },
                 ]}
-
             />
 
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-6"
+            >
+
+                {/* ================= GENERAL INFORMATION ================= */}
+
+                <Card className="shadow-lg border">
+
+                    <CardHeader className="border-b bg-slate-50">
+
+                        <CardTitle className="text-xl font-bold text-blue-700">
+                            General Information
+                        </CardTitle>
+
+                    </CardHeader>
+
+                    <CardContent className="pt-6">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Entity Name <span className="text-red-500">*</span>
+                                </Label>
+
+                                <Input
+                                    name="name"
+                                    placeholder="Enter entity name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                    required
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Entity Type <span className="text-red-500">*</span>
+                                </Label>
+
+                                <Input
+                                    name="type"
+                                    placeholder="Vendor / Supplier / Partner"
+                                    value={formData.type}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                    required
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Category
+                                </Label>
+
+                                <Input
+                                    name="category"
+                                    placeholder="Cloud, Banking, Logistics..."
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Country
+                                </Label>
+
+                                <Input
+                                    name="country"
+                                    placeholder="India"
+                                    value={formData.country}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                />
+
+                            </div>
+
+                            <div className="md:col-span-2">
+
+                                <Label className="font-semibold text-blue-700">
+                                    Website
+                                </Label>
+
+                                <Input
+                                    name="website"
+                                    placeholder="https://example.com"
+                                    value={formData.website}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                />
+
+                            </div>
+
+                            <div className="md:col-span-2">
+
+                                <Label className="font-semibold text-blue-700">
+                                    Description
+                                </Label>
+
+                                <Textarea
+                                    name="description"
+                                    rows={4}
+                                    placeholder="Brief description about the third-party organization..."
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    className="mt-2 resize-none"
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </CardContent>
+
+                </Card>
+                {/* ================= RISK INFORMATION ================= */}
+
+                <Card className="shadow-lg border">
+
+                    <CardHeader className="border-b bg-slate-50">
+
+                        <CardTitle className="text-xl font-bold text-blue-700">
+                            Risk Information
+                        </CardTitle>
+
+                    </CardHeader>
+
+                    <CardContent className="pt-6">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Criticality <span className="text-red-500">*</span>
+                                </Label>
+
+                                <Input
+                                    name="criticality"
+                                    placeholder="High / Medium / Low"
+                                    value={formData.criticality}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                    required
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Risk Rating <span className="text-red-500">*</span>
+                                </Label>
+
+                                <Input
+                                    name="riskRating"
+                                    placeholder="Critical / High / Medium / Low"
+                                    value={formData.riskRating}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                    required
+                                />
+
+                            </div>
+
+                            <div className="md:col-span-2">
+
+                                <Label className="font-semibold text-blue-700">
+                                    Entity Status <span className="text-red-500">*</span>
+                                </Label>
+
+                                <Input
+                                    name="status"
+                                    placeholder="Active / Inactive / Suspended"
+                                    value={formData.status}
+                                    onChange={handleChange}
+                                    className="mt-2"
+                                    required
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </CardContent>
+
+                </Card>
 
 
-            <Card className="max-w-3xl">
+                {/* ================= BUSINESS INFORMATION ================= */}
 
-                <CardContent className="p-6">
+                <Card className="shadow-lg border">
+
+                    <CardHeader className="border-b bg-slate-50">
+
+                        <CardTitle className="text-xl font-bold text-blue-700">
+                            Business Information
+                        </CardTitle>
+
+                    </CardHeader>
+
+                    <CardContent className="pt-6">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <div>
+
+                                <Label className="font-semibold text-blue-700">
+                                    Annual Spend
+                                </Label>
+
+                                <div className="relative mt-2">
+
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">
+                                        ₹
+                                    </span>
+
+                                    <Input
+                                        name="spend"
+                                        type="number"
+                                        min="0"
+                                        placeholder="Enter annual spend"
+                                        value={formData.spend}
+                                        onChange={handleChange}
+                                        className="pl-8"
+                                    />
+
+                                </div>
+
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    Total annual contract value with this third-party organization.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </CardContent>
+
+                </Card>
 
 
-                    <form
-                        onSubmit={handleSubmit}
-                        className="space-y-4"
-                    >
-
-
-                        <input
-                            name="name"
-                            placeholder="Entity Name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
-
-                        <input
-                            name="type"
-                            placeholder="Type (Vendor/Supplier)"
-                            value={formData.type}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
-
-                        <input
-                            name="category"
-                            placeholder="Category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
-
-                        <input
-                            name="country"
-                            placeholder="Country"
-                            value={formData.country}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
-
-                        <input
-                            name="website"
-                            placeholder="Website"
-                            value={formData.website}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
+                {/* ================= ENTITY SUMMARY ================= */}
 
 
 
-                        <input
-                            name="criticality"
-                            placeholder="Criticality"
-                            value={formData.criticality}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
+                {/* ================= ACTION BUTTONS ================= */}
 
+                <Card className="shadow-lg border">
 
+                    <CardContent className="flex items-center justify-between p-6">
 
-                        <input
-                            name="riskRating"
-                            placeholder="Risk Rating"
-                            value={formData.riskRating}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
+                        <div>
 
+                            <h3 className="font-semibold text-slate-800">
+                                Ready to Create?
+                            </h3>
 
+                            <p className="text-sm text-muted-foreground">
+                                Verify the information before creating the entity.
+                            </p>
 
-                        <input
-                            name="status"
-                            placeholder="Status"
-                            value={formData.status}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
-
-                        <input
-                            name="complianceScore"
-                            type="number"
-                            placeholder="Compliance Score"
-                            value={formData.complianceScore}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
-
-                        <input
-                            name="spend"
-                            type="number"
-                            placeholder="Annual Spend"
-                            value={formData.spend}
-                            onChange={handleChange}
-                            className="border p-2 w-full rounded"
-                        />
-
-
+                        </div>
 
                         <div className="flex gap-3">
 
-
                             <Button
-                                type="submit"
-                            >
-                                Save Entity
-                            </Button>
-
-
-
-                            <Button
-
                                 type="button"
-
                                 variant="outline"
-
-                                onClick={() =>
-                                    navigate("/entities")
-                                }
-
+                                onClick={() => navigate("/entities")}
                             >
                                 Cancel
                             </Button>
 
+                            <Button
+                                type="submit"
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
+                                Save Entity
+                            </Button>
 
                         </div>
 
+                    </CardContent>
 
-                    </form>
+                </Card>
 
-
-                </CardContent>
-
-            </Card>
-
+            </form>
 
         </>
 

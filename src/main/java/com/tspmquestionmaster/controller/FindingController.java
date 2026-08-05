@@ -4,7 +4,7 @@ package com.tspmquestionmaster.controller;
 import com.tspmquestionmaster.dto.request.CreateFindingRequest;
 import com.tspmquestionmaster.dto.response.FindingResponse;
 import com.tspmquestionmaster.service.FindingService;
-
+import com.tspmquestionmaster.dto.request.CreateFindingRequest;
 
 import lombok.RequiredArgsConstructor;
 

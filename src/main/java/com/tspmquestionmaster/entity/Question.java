@@ -35,7 +35,7 @@ public class Question extends BaseEntity {
     @Column(name = "status", nullable = false)
     private QuestionStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "topic_id", nullable = false)
     private Topic topic;
 }

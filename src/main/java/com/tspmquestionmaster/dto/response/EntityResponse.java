@@ -19,6 +19,9 @@ public class EntityResponse {
 
     private String website;
 
+    // New field
+    private String description;
+
     private String criticality;
 
     private String riskRating;

@@ -32,6 +32,9 @@ public class ThirdPartyEntity extends BaseEntity {
     @Column(name = "website", length = 255)
     private String website;
 
+    @Column(name = "description", length = 1000)
+    private String description;
+
     @Column(name = "criticality", nullable = false, length = 50)
     private String criticality;
 
@@ -41,8 +44,6 @@ public class ThirdPartyEntity extends BaseEntity {
     @Column(name = "compliance_score")
     private Integer complianceScore;
 
-    @Column(name = "assessment_count")
-    private Integer assessmentCount;
 
     @Column(name = "open_findings")
     private Integer openFindings;
@@ -59,18 +60,21 @@ public class ThirdPartyEntity extends BaseEntity {
             orphanRemoval = true
     )
     private List<EntityContact> contacts = new ArrayList<>();
+
     @OneToMany(
             mappedBy = "entity",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<EntityDocument> documents = new ArrayList<>();
+
     @OneToMany(
             mappedBy = "entity",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<EntityAssessment> assessments = new ArrayList<>();
+
     @OneToMany(
             mappedBy = "entity",
             cascade = CascadeType.ALL,

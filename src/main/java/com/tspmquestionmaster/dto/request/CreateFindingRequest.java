@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
+
 @Getter
 @Setter
 public class CreateFindingRequest {
@@ -25,13 +26,13 @@ public class CreateFindingRequest {
     private String severity;
 
 
-    private String recommendation;
-
-
     private String owner;
 
 
     private LocalDate dueDate;
+
+
+    private String recommendation;
 
 
     private String topic;

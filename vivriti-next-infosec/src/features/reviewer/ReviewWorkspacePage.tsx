@@ -150,7 +150,8 @@ export function ReviewWorkspacePage(){
             await reviewerApi.getWorkspace(
                 Number(id)
             );
-
+        console.log("Workspace Response:", data);
+        console.log("Answers:", data.answers);
 
         console.log(
             "Reviewer Workspace:",
@@ -327,7 +328,8 @@ export function ReviewWorkspacePage(){
   const current =
       answers[idx];
 
-
+  console.log("Current Answer:", current);
+  console.log("Assessment:", assessment);
 
 
   const reviewed =
@@ -496,14 +498,13 @@ export function ReviewWorkspacePage(){
             </div>
 
 
-
             <Button
 
                 variant="outline"
 
                 size="sm"
 
-                onClick={()=>
+                onClick={() =>
                     setFindingOpen(true)
                 }
 
@@ -1148,7 +1149,6 @@ export function ReviewWorkspacePage(){
 
 
 
-
         {/* FINDING DIALOG */}
 
         <Dialog
@@ -1176,13 +1176,137 @@ export function ReviewWorkspacePage(){
 
           <DialogBody>
 
-            Finding module already integrated.
+
+            <p className="text-sm text-muted-foreground mb-4">
+
+              Create a finding for this assessment response.
+
+            </p>
+
+
+            <Button
+
+                onClick={() => {
+
+
+                  navigate(
+                      `/findings/create?assessmentId=${assessment.id}` +
+                      `&entityId=${assessment.entityId}` +
+                      `&entityName=${encodeURIComponent(assessment.entityName)}` +
+                      `&templateName=${encodeURIComponent(assessment.templateName)}` +
+                      `&questionId=${current.questionId}` +
+                      `&question=${encodeURIComponent(current.questionText)}` +
+                      `&topic=${encodeURIComponent(current.topic || "")}`
+                  );
+
+                    setFindingOpen(false);
+
+                  }}
+
+            >
+              <ShieldAlert className="mr-2 h-4 w-4"/>
+
+              Create Finding
+
+            </Button>
 
           </DialogBody>
 
 
 
-          <DialogFooter>
+
+          <DialogFooter><Dialog
+
+              open={findingOpen}
+
+              onOpenChange={setFindingOpen}
+
+          >
+
+
+            <DialogHeader>
+
+              <DialogTitle>
+
+                <ShieldAlert className="mr-2 inline"/>
+
+                Create Finding
+
+              </DialogTitle>
+
+            </DialogHeader>
+
+
+
+            <DialogBody>
+
+
+              <p className="text-sm text-muted-foreground mb-4">
+
+                Create finding for this vendor response.
+
+              </p>
+
+
+
+              <Button
+
+                  onClick={() => {
+
+
+                    navigate(
+
+                        `/findings/new?assessmentId=${assessment.id}&entityId=${assessment.entityId}&questionId=${current.questionId}&title=${encodeURIComponent(current.questionText)}`
+
+                    );
+
+
+
+                    setFindingOpen(false);
+
+
+
+                  }}
+
+
+              >
+
+
+                Create Finding
+
+
+              </Button>
+
+
+
+            </DialogBody>
+
+
+
+
+            <DialogFooter>
+
+
+              <Button
+
+                  variant="outline"
+
+                  onClick={() =>
+                      setFindingOpen(false)
+                  }
+
+              >
+
+                Cancel
+
+              </Button>
+
+
+            </DialogFooter>
+
+
+
+          </Dialog>
 
 
             <Button
@@ -1190,7 +1314,9 @@ export function ReviewWorkspacePage(){
                 variant="outline"
 
                 onClick={()=>
+
                     setFindingOpen(false)
+
                 }
 
             >

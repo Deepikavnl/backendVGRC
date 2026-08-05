@@ -1,127 +1,305 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-
-import { templateApi } from "@/features/templates/templateApi";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
     ArrowLeft,
+    LayoutTemplate,
     FolderOpen,
-    FileText
+    FileText,
+    CheckCircle2,
+    CalendarDays,
+    Layers,
+    Hash,
+    ShieldCheck,
+    Clock
 } from "lucide-react";
+
+
+import { templateApi } from "@/features/templates/templateApi";
 
 import { PageHeader } from "@/components/common/page-header";
 
 import {
     Card,
-    CardContent,
     CardHeader,
-    CardTitle
+    CardTitle,
+    CardContent
 } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import { StatusBadge } from "@/components/common/status-badge";
 
-export function TemplateViewPage(){
-
-    const {id}=useParams();
-
-    const navigate=useNavigate();
+import { toast } from "@/store/toast";
 
 
-    const [template,setTemplate]=useState<any>(null);
+export function TemplateViewPage() {
+
+
+    const { id } = useParams();
+
+    const navigate = useNavigate();
+
+
+    const [loading, setLoading] = useState(true);
+
+    const [template, setTemplate] = useState<any>(null);
 
 
 
-    useEffect(()=>{
+    //=========================================
+    // Load Template
+    //=========================================
+
+    useEffect(() => {
 
 
-        if(!id)
+        if (!id) {
             return;
+        }
 
 
-        templateApi
-            .getTemplate(Number(id))
+        const loadTemplate = async () => {
 
-            .then((res:any)=>{
 
-                console.log(
-                    "Template View:",
-                    res
+            try {
+
+
+                setLoading(true);
+
+
+                const response =
+                    await templateApi.getTemplate(Number(id));
+
+                console.log("Template Data:", response);
+
+                setTemplate(response);
+
+
+            } catch (error) {
+
+
+                console.error(
+                    "Template loading failed",
+                    error
                 );
 
 
-                setTemplate(
-                    res.data ?? res
+                toast.error(
+                    "Unable to load template"
                 );
 
 
-            })
-
-            .catch(err=>{
-
-                console.error(err);
-
-            });
+            } finally {
 
 
-
-    },[id]);
-
+                setLoading(false);
 
 
-    if(!template){
+            }
+
+
+        };
+
+
+        loadTemplate();
+
+
+    }, [id]);
+
+
+
+
+
+    //=========================================
+    // Loading Screen
+    //=========================================
+
+    if (loading) {
+
 
         return (
 
-            <div className="p-5">
+            <div className="flex h-[70vh] items-center justify-center">
 
-                Loading Template...
+
+                <div className="text-center">
+
+
+                    <LayoutTemplate
+                        className="
+                            mx-auto
+                            mb-4
+                            h-12
+                            w-12
+                            animate-pulse
+                            text-primary
+                        "
+                    />
+
+
+                    <p className="text-muted-foreground">
+
+                        Loading template...
+
+                    </p>
+
+
+                </div>
+
 
             </div>
 
         );
 
+
     }
 
 
 
+
+
+    //=========================================
+    // Not Found
+    //=========================================
+
+    if (!template) {
+
+
+        return (
+
+            <div className="
+                flex
+                h-[70vh]
+                items-center
+                justify-center
+                text-muted-foreground
+            ">
+
+                Template not found.
+
+            </div>
+
+        );
+
+
+    }
+
+
+
+
+
+    //=========================================
+    // Statistics
+    //=========================================
+
+
+    const totalTopics =
+        template.topics?.length ?? 0;
+
+
+
+    const totalQuestions =
+        template.topics?.reduce(
+
+            (
+                total:number,
+                topic:any
+            ) =>
+
+                total +
+                (
+                    topic.questions?.length ?? 0
+                ),
+
+            0
+
+        ) ?? 0;
+
+
+
+
+    const mandatoryQuestions =
+        template.topics?.reduce(
+
+            (
+                total:number,
+                topic:any
+            ) =>
+
+                total +
+                (
+                    topic.questions?.filter(
+                        (q:any)=>q.mandatory
+                    ).length ?? 0
+                ),
+
+            0
+
+        ) ?? 0;
     return (
 
         <>
-
 
             <PageHeader
 
                 title={template.name}
 
-                description={template.description}
+                description={
+                    template.description ||
+                    "Assessment Template"
+                }
 
                 breadcrumbs={[
                     {
-                        label:"Templates"
+                        label: "Templates"
                     },
                     {
-                        label:"View"
+                        label: template.name
                     }
                 ]}
 
 
                 actions={
 
-                    <Button
+                    <div className="flex gap-2">
 
-                        variant="outline"
 
-                        onClick={()=>navigate("/templates")}
+                        <Button
 
-                    >
+                            variant="outline"
 
-                        <ArrowLeft className="h-4 w-4 mr-2"/>
+                            onClick={() =>
+                                navigate("/templates")
+                            }
 
-                        Back
+                        >
 
-                    </Button>
+                            <ArrowLeft className="mr-2 h-4 w-4"/>
+
+                            Back
+
+                        </Button>
+
+
+
+                        <Button
+
+                            onClick={() =>
+                                navigate(
+                                    `/templates/builder/${template.id}`
+                                )
+                            }
+
+                        >
+
+                            Edit Template
+
+                        </Button>
+
+
+                    </div>
 
                 }
 
@@ -130,127 +308,850 @@ export function TemplateViewPage(){
 
 
 
+
+
+            {/* ============================
+                Summary Cards
+            ============================ */}
+
+
+            <div className="
+                mb-6
+                grid
+                gap-4
+                md:grid-cols-2
+                xl:grid-cols-4
+            ">
+
+
+
+                {/* Topics */}
+
+
+                <Card
+                    className="
+                        border-0
+                        bg-gradient-to-r
+                        from-blue-600
+                        to-cyan-500
+                        text-white
+                        shadow-lg
+                    "
+                >
+
+                    <CardContent className="p-5">
+
+
+                        <div className="
+                            flex
+                            items-center
+                            justify-between
+                        ">
+
+
+                            <div>
+
+
+                                <p className="text-sm opacity-80">
+
+                                    Total Topics
+
+                                </p>
+
+
+                                <h2 className="mt-2 text-3xl font-bold">
+
+                                    {totalTopics}
+
+                                </h2>
+
+
+                            </div>
+
+
+                            <Layers
+                                className="
+                                    h-10
+                                    w-10
+                                    opacity-80
+                                "
+                            />
+
+
+                        </div>
+
+
+                    </CardContent>
+
+
+                </Card>
+
+
+
+
+
+
+                {/* Questions */}
+
+
+                <Card
+
+                    className="
+                        border-0
+                        bg-gradient-to-r
+                        from-emerald-500
+                        to-green-600
+                        text-white
+                        shadow-lg
+                    "
+
+                >
+
+
+                    <CardContent className="p-5">
+
+
+                        <div className="
+                            flex
+                            items-center
+                            justify-between
+                        ">
+
+
+                            <div>
+
+
+                                <p className="text-sm opacity-80">
+
+                                    Questions
+
+                                </p>
+
+
+                                <h2 className="mt-2 text-3xl font-bold">
+
+                                    {totalQuestions}
+
+                                </h2>
+
+
+                            </div>
+
+
+                            <FileText
+                                className="
+                                    h-10
+                                    w-10
+                                    opacity-80
+                                "
+                            />
+
+
+                        </div>
+
+
+                    </CardContent>
+
+
+                </Card>
+
+
+
+
+
+
+                {/* Mandatory */}
+
+
+                <Card
+
+                    className="
+                        border-0
+                        bg-gradient-to-r
+                        from-orange-500
+                        to-red-500
+                        text-white
+                        shadow-lg
+                    "
+
+                >
+
+
+                    <CardContent className="p-5">
+
+
+                        <div className="
+                            flex
+                            items-center
+                            justify-between
+                        ">
+
+
+                            <div>
+
+
+                                <p className="text-sm opacity-80">
+
+                                    Mandatory
+
+                                </p>
+
+
+                                <h2 className="mt-2 text-3xl font-bold">
+
+                                    {mandatoryQuestions}
+
+                                </h2>
+
+
+                            </div>
+
+
+                            <ShieldCheck
+                                className="
+                                    h-10
+                                    w-10
+                                    opacity-80
+                                "
+                            />
+
+
+                        </div>
+
+
+                    </CardContent>
+
+
+                </Card>
+
+
+
+
+
+
+
+                {/* Version */}
+
+
+                <Card
+
+                    className="
+                        border-0
+                        bg-gradient-to-r
+                        from-violet-600
+                        to-fuchsia-500
+                        text-white
+                        shadow-lg
+                    "
+
+                >
+
+
+                    <CardContent className="p-5">
+
+
+                        <div className="
+                            flex
+                            items-center
+                            justify-between
+                        ">
+
+
+                            <div>
+
+
+                                <p className="text-sm opacity-80">
+
+                                    Version
+
+                                </p>
+
+
+                                <h2 className="mt-2 text-3xl font-bold">
+
+                                    v{template.version ?? 1}
+
+                                </h2>
+
+
+                            </div>
+
+
+                            <Hash
+                                className="
+                                    h-10
+                                    w-10
+                                    opacity-80
+                                "
+                            />
+
+
+                        </div>
+
+
+                    </CardContent>
+
+
+                </Card>
+
+
+
+            </div>
+            {/* ============================
+                Template Information
+            ============================ */}
+
+
+            <Card className="mb-6 border-0 shadow-md">
+
+
+                <CardHeader>
+
+
+                    <CardTitle className="flex items-center gap-2">
+
+
+                        <LayoutTemplate
+                            className="
+                                h-5
+                                w-5
+                                text-primary
+                            "
+                        />
+
+
+                        Template Details
+
+
+                    </CardTitle>
+
+
+                </CardHeader>
+
+
+
+                <CardContent>
+
+
+                    <div className="grid gap-6 md:grid-cols-2">
+
+
+                        <div>
+
+
+                            <p className="
+                                mb-1
+                                text-xs
+                                uppercase
+                                text-muted-foreground
+                            ">
+
+                                Template Name
+
+                            </p>
+
+
+                            <h3 className="text-xl font-semibold">
+
+                                {template.name}
+
+                            </h3>
+
+
+                        </div>
+
+
+
+
+                        <div>
+
+
+                            <p className="
+                                mb-1
+                                text-xs
+                                uppercase
+                                text-muted-foreground
+                            ">
+
+                                Category
+
+                            </p>
+
+
+                            <Badge variant="secondary">
+
+                                {template.category || "General"}
+
+                            </Badge>
+
+
+                        </div>
+
+
+
+
+
+                        <div>
+
+
+                            <p className="
+                                mb-1
+                                text-xs
+                                uppercase
+                                text-muted-foreground
+                            ">
+
+                                Status
+
+                            </p>
+
+
+                            <StatusBadge
+                                status={template.status}
+                            />
+
+
+                        </div>
+
+
+
+
+
+                        <div>
+
+
+                            <p className="
+                                mb-1
+                                text-xs
+                                uppercase
+                                text-muted-foreground
+                            ">
+
+                                Usage Count
+
+                            </p>
+
+
+                            <div className="flex items-center gap-2">
+
+
+                                <CheckCircle2
+                                    className="
+                                        h-4
+                                        w-4
+                                        text-green-600
+                                    "
+                                />
+
+
+                                {template.usageCount ?? 0}
+
+
+                            </div>
+
+
+                        </div>
+
+
+
+
+
+                        <div>
+
+
+                            <p className="
+                                mb-1
+                                text-xs
+                                uppercase
+                                text-muted-foreground
+                            ">
+
+                                Created
+
+                            </p>
+
+
+                            <div className="flex items-center gap-2">
+
+
+                                <CalendarDays
+                                    className="
+                                        h-4
+                                        w-4
+                                        text-blue-600
+                                    "
+                                />
+
+
+                                {template.createdAt || "-"}
+
+
+                            </div>
+
+
+                        </div>
+
+
+
+
+
+                        <div>
+
+
+                            <p className="
+                                mb-1
+                                text-xs
+                                uppercase
+                                text-muted-foreground
+                            ">
+
+                                Updated
+
+                            </p>
+
+
+                            <div className="flex items-center gap-2">
+
+
+                                <Clock
+                                    className="
+                                        h-4
+                                        w-4
+                                        text-orange-600
+                                    "
+                                />
+
+
+                                {template.updatedAt || "-"}
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </CardContent>
+
+
+            </Card>
+
+
+
+
+
+
+
+            {/* ============================
+                Topics & Questions
+            ============================ */}
+
+
+
             <div className="space-y-6">
 
 
                 {
-
-                    template.topics?.map((topic:any)=>(
-
-
-                        <Card key={topic.topicId}>
+                    template.topics?.map(
+                        (topic:any,index:number)=>(
 
 
-                            <CardHeader>
+                            <Card
 
+                                key={
+                                    topic.topicId ??
+                                    index
+                                }
 
-                                <CardTitle className="flex gap-2 items-center">
+                                className="
+                                overflow-hidden
+                                border-0
+                                shadow-lg
+                            "
 
-
-                                    <FolderOpen className="h-5 w-5"/>
-
-
-                                    {topic.topicName}
-
-
-                                </CardTitle>
-
-
-                            </CardHeader>
+                            >
 
 
 
-                            <CardContent className="space-y-3">
+                                <div className="
+                                border-b
+                                bg-gradient-to-r
+                                from-slate-50
+                                to-blue-50
+                                px-6
+                                py-4
+                            ">
 
 
-                                {
-
-                                    topic.questions?.length === 0 ?
-
-                                        (
-
-                                            <p className="text-muted-foreground">
-
-                                                No Questions
-
-                                            </p>
-
-                                        )
-
-                                        :
-
-                                        topic.questions.map((q:any)=>(
+                                    <div className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                ">
 
 
-                                            <div
-
-                                                key={q.id}
-
-                                                className="border rounded-md p-4 flex justify-between"
-
-                                            >
+                                        <div className="
+                                        flex
+                                        items-center
+                                        gap-3
+                                    ">
 
 
-                                                <div>
+                                            <div className="
+                                            rounded-lg
+                                            bg-blue-600
+                                            p-2
+                                            text-white
+                                        ">
 
 
-                                                    <div className="flex gap-2">
-
-
-                                                        <FileText className="h-4 w-4"/>
-
-
-                                                        <span>
-
-                                        {q.questionText}
-
-                                    </span>
-
-
-                                                    </div>
-
-
-
-                                                    <p className="text-sm text-muted-foreground mt-2">
-
-                                                        Type : {q.questionType}
-
-                                                    </p>
-
-
-                                                </div>
-
-
-
-                                                {
-
-                                                    q.mandatory &&
-
-                                                    <Badge>
-
-                                                        Mandatory
-
-                                                    </Badge>
-
-                                                }
+                                                <FolderOpen
+                                                    className="
+                                                    h-5
+                                                    w-5
+                                                "
+                                                />
 
 
                                             </div>
 
 
-                                        ))
-
-                                }
+                                            <div>
 
 
-                            </CardContent>
+                                                <h3 className="
+                                                text-lg
+                                                font-semibold
+                                            ">
+
+                                                    {
+                                                        topic.topicName ||
+                                                        topic.name
+                                                    }
+
+                                                </h3>
+
+
+                                                <p className="
+                                                text-sm
+                                                text-muted-foreground
+                                            ">
+
+                                                    Topic {index + 1}
+
+                                                </p>
+
+
+                                            </div>
+
+
+                                        </div>
 
 
 
-                        </Card>
+                                        <Badge variant="secondary">
 
 
-                    ))
+                                            {
+                                                topic.questions?.length ?? 0
+                                            }
+
+                                            {" "}
+                                            Questions
+
+
+                                        </Badge>
+
+
+
+                                    </div>
+
+
+                                </div>
+
+
+
+
+
+                                <CardContent className="space-y-4 p-6">
+
+
+                                    {
+                                        topic.questions?.map(
+                                            (
+                                                question:any,
+                                                qIndex:number
+                                            )=>(
+
+
+                                                <div
+
+                                                    key={
+                                                        question.id ??
+                                                        qIndex
+                                                    }
+
+                                                    className="
+                                                rounded-xl
+                                                border
+                                                bg-white
+                                                p-5
+                                                shadow-sm
+                                            "
+
+                                                >
+
+
+                                                    <div className="
+                                                flex
+                                                gap-4
+                                            ">
+
+
+                                                        <div className="
+                                                    flex
+                                                    h-10
+                                                    w-10
+                                                    items-center
+                                                    justify-center
+                                                    rounded-full
+                                                    bg-blue-100
+                                                    font-bold
+                                                    text-blue-700
+                                                ">
+
+
+                                                            {
+                                                                qIndex + 1
+                                                            }
+
+
+                                                        </div>
+
+
+
+
+                                                        <div>
+
+
+                                                            <div className="
+                                                        flex
+                                                        items-center
+                                                        gap-2
+                                                    ">
+
+
+                                                                <FileText
+                                                                    className="
+                                                                h-4
+                                                                w-4
+                                                                text-blue-600
+                                                            "
+                                                                />
+
+
+                                                                <h4 className="font-semibold">
+
+
+                                                                    {
+                                                                        question.questionText
+                                                                    }
+
+
+                                                                </h4>
+
+
+                                                            </div>
+
+
+
+
+                                                            <div className="
+                                                        mt-3
+                                                        flex
+                                                        flex-wrap
+                                                        gap-2
+                                                    ">
+
+
+                                                                <Badge variant="outline">
+
+
+                                                                    {
+                                                                        question.questionType
+                                                                    }
+
+
+                                                                </Badge>
+
+
+
+                                                                <Badge variant="outline">
+
+
+                                                                    Weight {
+
+                                                                    question.weight ??
+                                                                    0
+
+                                                                }
+
+
+                                                                </Badge>
+
+
+
+
+                                                                {
+                                                                    question.mandatory && (
+
+
+                                                                        <Badge>
+
+
+                                                                            Mandatory
+
+
+                                                                        </Badge>
+
+
+                                                                    )
+                                                                }
+
+
+                                                            </div>
+
+
+                                                        </div>
+
+
+                                                    </div>
+
+
+                                                </div>
+
+
+                                            )
+
+                                        )
+
+
+                                    }
+
+
+                                </CardContent>
+
+
+                            </Card>
+
+
+                        )
+
+                    )
+
 
                 }
 

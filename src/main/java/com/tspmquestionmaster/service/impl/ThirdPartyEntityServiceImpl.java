@@ -27,22 +27,27 @@ public class ThirdPartyEntityServiceImpl implements ThirdPartyEntityService {
 
     private final ThirdPartyEntityRepository repository;
     private final ThirdPartyEntityMapper mapper;
-
     @Override
     public EntityResponse createEntity(CreateEntityRequest request) {
 
         if (repository.existsByNameIgnoreCase(request.getName())) {
+
             throw new DuplicateResourceException(
                     "Entity already exists : " + request.getName());
+
         }
 
         ThirdPartyEntity entity = mapper.toEntity(request);
+
+        // System managed fields
+        entity.setComplianceScore(0);
+
+        entity.setOpenFindings(0);
 
         ThirdPartyEntity savedEntity = repository.save(entity);
 
         return mapper.toResponse(savedEntity);
     }
-
     @Override
     public EntityResponse updateEntity(Long id, UpdateEntityRequest request) {
 

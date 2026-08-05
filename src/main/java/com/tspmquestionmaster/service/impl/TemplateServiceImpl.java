@@ -236,5 +236,53 @@ public class TemplateServiceImpl implements TemplateService {
 
         templateRepository.delete(template);
     }
+    @Override
+    public TemplateResponse cloneTemplate(Long id) {
 
+        Template original = templateRepository.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Template not found"));
+
+        Template clone = Template.builder()
+                .name(original.getName() + " - Copy")
+                .description(original.getDescription())
+                .category(original.getCategory())
+                .status(TemplateStatus.DRAFT)
+                .version(1)
+                .usageCount(0)
+                .build();
+
+        clone = templateRepository.save(clone);
+
+        List<TemplateTopicMapping> mappings = new ArrayList<>();
+
+        for (TemplateTopicMapping oldMapping : original.getTopics()) {
+
+            TemplateTopicMapping mapping = TemplateTopicMapping.builder()
+                    .template(clone)
+                    .topic(oldMapping.getTopic())
+                    .build();
+
+            mappings.add(
+                    templateTopicMappingRepository.save(mapping)
+            );
+        }
+
+        clone.setTopics(mappings);
+
+        return templateMapper.toResponse(clone);
+    }
+    @Override
+    public TemplateResponse publishTemplate(Long id) {
+
+        Template template = templateRepository.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Template not found"));
+
+        template.setStatus(TemplateStatus.PUBLISHED);
+
+        return templateMapper.toResponse(
+                templateRepository.save(template)
+        );
+    }
 }

@@ -526,8 +526,9 @@ export function EntitiesPage() {
                               <TableHead>
                                 Type
                               </TableHead>
-
-
+                                <TableHead>
+                                    Assessments
+                                </TableHead>
                               <TableHead>
                                 Criticality
                               </TableHead>
@@ -637,7 +638,11 @@ export function EntitiesPage() {
                                     </TableCell>
 
 
+                                      <TableCell>
 
+                                          {e.assessmentCount || 0}
+
+                                      </TableCell>
 
 
                                     <TableCell>
@@ -743,7 +748,7 @@ export function EntitiesPage() {
 
                                                 variant="ghost"
 
-                                                size="icon-sm"
+                                                size="icon"
 
                                             >
 

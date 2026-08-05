@@ -16,7 +16,9 @@ public interface TemplateService {
 
 
     List<TemplateResponse> getAllTemplates();
+    TemplateResponse cloneTemplate(Long id);
 
+    TemplateResponse publishTemplate(Long id);
 
     TemplateResponse getTemplateById(
             Long id

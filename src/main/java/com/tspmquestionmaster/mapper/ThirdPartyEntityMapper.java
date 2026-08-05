@@ -18,29 +18,26 @@ public class ThirdPartyEntityMapper {
         entity.setCategory(request.getCategory());
         entity.setCountry(request.getCountry());
         entity.setWebsite(request.getWebsite());
+        entity.setDescription(request.getDescription());
         entity.setCriticality(request.getCriticality());
         entity.setRiskRating(request.getRiskRating());
-        entity.setComplianceScore(request.getComplianceScore());
-        entity.setAssessmentCount(request.getAssessmentCount());
-        entity.setOpenFindings(request.getOpenFindings());
         entity.setStatus(request.getStatus());
         entity.setSpend(request.getSpend());
 
         return entity;
     }
 
-    public void updateEntity(UpdateEntityRequest request, ThirdPartyEntity entity) {
+    public void updateEntity(UpdateEntityRequest request,
+                             ThirdPartyEntity entity) {
 
         entity.setName(request.getName());
         entity.setType(request.getType());
         entity.setCategory(request.getCategory());
         entity.setCountry(request.getCountry());
         entity.setWebsite(request.getWebsite());
+        entity.setDescription(request.getDescription());
         entity.setCriticality(request.getCriticality());
         entity.setRiskRating(request.getRiskRating());
-        entity.setComplianceScore(request.getComplianceScore());
-        entity.setAssessmentCount(request.getAssessmentCount());
-        entity.setOpenFindings(request.getOpenFindings());
         entity.setStatus(request.getStatus());
         entity.setSpend(request.getSpend());
     }
@@ -55,11 +52,19 @@ public class ThirdPartyEntityMapper {
         response.setCategory(entity.getCategory());
         response.setCountry(entity.getCountry());
         response.setWebsite(entity.getWebsite());
+        response.setDescription(entity.getDescription());
         response.setCriticality(entity.getCriticality());
         response.setRiskRating(entity.getRiskRating());
         response.setComplianceScore(entity.getComplianceScore());
-        response.setAssessmentCount(entity.getAssessmentCount());
-        response.setOpenFindings(entity.getOpenFindings());
+        response.setAssessmentCount(
+                entity.getAssessments() != null
+                        ? entity.getAssessments().size()
+                        : 0
+        ); response.setOpenFindings(
+                entity.getFindings() != null
+                        ? entity.getFindings().size()
+                        : 0
+        );
         response.setStatus(entity.getStatus());
         response.setSpend(entity.getSpend());
 

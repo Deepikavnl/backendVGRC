@@ -106,10 +106,14 @@ public class FindingServiceImpl implements FindingService {
 
 
         finding.setSeverity(
+
                 FindingSeverity.valueOf(
                         request.getSeverity()
+                                .trim()
                                 .toUpperCase()
                 )
+
+
         );
 
 
@@ -130,13 +134,11 @@ public class FindingServiceImpl implements FindingService {
     }
 
 
-
-
     @Override
     public List<FindingResponse> getAllFindings() {
 
 
-        return findingRepository.findAll()
+        return findingRepository.findAllWithEntity()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

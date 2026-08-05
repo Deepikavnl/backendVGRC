@@ -318,7 +318,7 @@ export function FindingsPage() {
                                             trigger={
                                                 <Button
                                                     variant="ghost"
-                                                    size="icon-sm"
+                                                    size="icon"
                                                 >
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>

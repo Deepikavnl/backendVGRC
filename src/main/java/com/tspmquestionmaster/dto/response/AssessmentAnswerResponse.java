@@ -15,6 +15,9 @@ public class AssessmentAnswerResponse {
 
     private String questionText;
 
+    // NEW
+    private String topic;
+
     private String answerValue;
 
     private String status;
@@ -22,8 +25,11 @@ public class AssessmentAnswerResponse {
     private Integer weight;
 
     private Boolean mandatory;
+
     private String reviewerDecision;
+
     private String reviewerComment;
+
     private List<VendorEvidenceResponse> evidence;
 
 }
