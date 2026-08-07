@@ -39,8 +39,11 @@ import { toast } from "@/store/toast";
 import { formatDate } from "@/lib/utils";
 
 import { topics } from "@/data/mock";
-import { getQuestions } from "./api";
-
+import {
+    getQuestions,
+    importQuestions,
+    downloadQuestionTemplate,
+} from "./api";
 const typeLabels: Record<string, string> = {
     TEXT: "Short Text",
     PARAGRAPH: "Paragraph",
@@ -50,15 +53,15 @@ const typeLabels: Record<string, string> = {
     NUMBER: "Number",
     DATE: "Date",
     FILE: "File Upload",
-};
 
+};
 const PAGE_SIZE = 12;
 
 export function QuestionBankPage() {
     const navigate = useNavigate();
 
     const [allQuestions, setAllQuestions] = useState<any[]>([]);
-
+    const [questionFile, setQuestionFile] = useState<File | null>(null);
     const [search, setSearch] = useState("");
     const [topic, setTopic] = useState("");
     const [type, setType] = useState("");
@@ -148,6 +151,61 @@ export function QuestionBankPage() {
 
         setSelected(next);
     };
+    const handleDownloadQuestionTemplate = async () => {
+        try {
+
+            const response = await downloadQuestionTemplate();
+
+            const url = window.URL.createObjectURL(response.data);
+
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "Question_Import_Template.xlsx";
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(url);
+
+            toast.success("Template downloaded");
+
+        } catch (error) {
+
+            console.error(error);
+
+            toast.error("Failed to download template");
+        }
+    };
+    const handleQuestionImport = async () => {
+
+        if (!questionFile) {
+            toast.error("Please select an Excel file");
+            return;
+        }
+
+        try {
+
+            await importQuestions(questionFile);
+
+            toast.success("Questions imported successfully");
+
+            setQuestionFile(null);
+
+            loadQuestions();
+
+        } catch (error) {
+
+            console.error(error);
+
+            toast.error("Question import failed");
+
+        }
+
+    };
 
     return (
         <>
@@ -160,30 +218,104 @@ export function QuestionBankPage() {
                 ]}
                 actions={
                     <>
+                        {/* Excel File Select */}
+
+
+
+
+                        <input
+                            id="question-upload"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            className="hidden"
+                            onChange={(e) => {
+
+                                const file = e.target.files?.[0];
+
+                                if (file) {
+                                    setQuestionFile(file);
+                                    toast.success(`${file.name} selected`);
+                                }
+
+                            }}
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={handleDownloadQuestionTemplate}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Template
+                        </Button>
+                        <Button
+                            variant="outline"
+                            type="button"
+                            onClick={() =>
+                                document.getElementById("question-upload")?.click()
+                            }
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Choose Excel
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={handleQuestionImport}
+                        >
+                            Import Questions
+                        </Button>
+
+
+
+                        {/* Import Button */}
+
+
+
+
+
+
+
+
+
+                        {/* Export Button */}
+
                         <Button
                             variant="outline"
                             onClick={() =>
                                 exportToCSV(
                                     "questions",
-                                    filtered.map((q: any) => ({
-                                        Code: q.code,
-                                        Question: q.questionText,
-                                        Type: q.questionType,
-                                        Weight: q.weight,
-                                        Mandatory: q.mandatory,
-                                        Status: q.status,
+                                    filtered.map((q:any)=>({
+                                        Code:q.code,
+                                        Question:q.questionText,
+                                        Type:q.questionType,
+                                        Weight:q.weight,
+                                        Mandatory:q.mandatory,
+                                        Status:q.status,
                                     }))
                                 )
                             }
                         >
-                            <Download className="h-4 w-4" />
+
+                            <Download className="h-4 w-4 mr-2"/>
+
                             Export
+
                         </Button>
 
-                        <Button onClick={() => navigate("/questions/new")}>
-                            <Plus className="h-4 w-4" />
+
+
+                        {/* Create Question */}
+
+                        <Button
+                            onClick={() =>
+                                navigate("/questions/new")
+                            }
+                        >
+
+                            <Plus className="h-4 w-4 mr-2"/>
+
                             New Question
+
                         </Button>
+
                     </>
                 }
             />
@@ -342,7 +474,7 @@ export function QuestionBankPage() {
                                                 trigger={
                                                     <Button
                                                         variant="ghost"
-                                                        size="icon-sm"
+                                                        size="icon"
                                                     >
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>

@@ -91,6 +91,23 @@ const publishTemplate = async (
 };
 
 
+// Excel Export
+const exportTemplate = async (
+    id: number
+) => {
+
+    const res = await apiClient.get(
+        `/templates/${id}/export`,
+        {
+            responseType: "blob"
+        }
+    );
+
+    return res.data;
+
+};
+
+
 
 export const templateApi = {
 
@@ -106,6 +123,8 @@ export const templateApi = {
 
     cloneTemplate,
 
-    publishTemplate
+    publishTemplate,
+
+    exportTemplate
 
 };

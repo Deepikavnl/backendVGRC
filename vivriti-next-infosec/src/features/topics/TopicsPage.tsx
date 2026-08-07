@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { createTopic, getTopics } from "./api";
-import { Plus, FolderTree, MoreVertical, Eye, Pencil, Trash2 } from "lucide-react";
+import { createTopic, getTopics , importTopics , downloadTopicTemplate } from "./api";
+import { Plus, FolderTree, MoreVertical, Eye, Pencil, Trash2, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,13 +20,15 @@ import { toast } from "@/store/toast";
 
 export function TopicsPage() {
     const [open, setOpen] = useState(false);
-
     const [topics, setTopics] = useState<any[]>([]);
+    const [topicFile, setTopicFile] = useState<File | null>(null);
     const navigate = useNavigate();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [color, setColor] = useState("#1f47d8");
     const [selectedTopic, setSelectedTopic] = useState<any>(null);
+
+
     const loadTopics = async () => {
         try {
             const res = await getTopics();
@@ -78,7 +80,65 @@ export function TopicsPage() {
             toast.error("Failed to create topic");
         }
     };
+    const handleDownloadTopicTemplate = async () => {
+        try {
+            const response = await downloadTopicTemplate();
 
+            const url = window.URL.createObjectURL(response.data);
+
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "Topic_Import_Template.xlsx";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to download template");
+        }
+    };
+    const handleTopicImport = async () => {
+
+        if (!topicFile) {
+
+            toast.error("Please select Excel file");
+
+            return;
+        }
+
+
+        try {
+
+            await importTopics(topicFile);
+
+
+            toast.success(
+                "Topics imported successfully"
+            );
+
+
+            setTopicFile(null);
+
+
+            loadTopics();
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            toast.error(
+                "Topic import failed"
+            );
+
+        }
+
+    };
     return (
         <>
             <PageHeader
@@ -94,10 +154,60 @@ export function TopicsPage() {
                     },
                 ]}
                 actions={
-                    <Button onClick={() => setOpen(true)}>
-                        <Plus className="h-4 w-4" />
-                        New Topic
-                    </Button>
+                    <>
+                        <div>
+                            <input
+                                id="excel-upload"
+                                type="file"
+                                accept=".xlsx,.xls"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+
+                                    if (file) {
+                                        setTopicFile(file);
+                                        toast.success(`${file.name} selected`);
+                                    }
+                                }}
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={handleDownloadTopicTemplate}
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download Template
+                            </Button>
+                            <Button
+                                variant="outline"
+                                type="button"
+                                onClick={() =>
+                                    document
+                                        .getElementById("excel-upload")
+                                        ?.click()
+                                }
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                Choose Excel
+                            </Button>
+                        </div>
+
+
+                        <Button
+                            variant="outline"
+                            onClick={handleTopicImport}
+                        >
+                            Import Topics
+                        </Button>
+
+
+
+                        <Button
+                            onClick={() => setOpen(true)}
+                        >
+                            <Plus className="h-4 w-4" />
+                            New Topic
+                        </Button>
+                    </>
                 }
             />
 

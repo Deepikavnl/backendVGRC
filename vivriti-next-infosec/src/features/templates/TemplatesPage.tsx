@@ -20,7 +20,8 @@ import {
     Trash2,
     Layers,
     FileText,
-    TrendingUp
+    TrendingUp,
+    Download
 } from "lucide-react";
 
 
@@ -336,7 +337,61 @@ export function TemplatesPage(){
 
     };
 
+    const handleExport = async(id:number)=>{
 
+        try{
+
+            const file =
+                await templateApi.exportTemplate(id);
+
+
+            const url =
+                window.URL.createObjectURL(
+                    new Blob([file])
+                );
+
+
+            const link =
+                document.createElement("a");
+
+
+            link.href = url;
+
+            link.download =
+                "template.xlsx";
+
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            link.remove();
+
+
+            window.URL.revokeObjectURL(url);
+
+
+            toast.success(
+                "Template exported"
+            );
+
+
+        }
+        catch(error){
+
+            console.error(
+                "Export failed",
+                error
+            );
+
+
+            toast.error(
+                "Export failed"
+            );
+
+        }
+
+    };
 
     if(loading){
 
@@ -1208,12 +1263,35 @@ export function TemplatesPage(){
                                                 {/* ACTIONS */}
 
 
-
                                                 <div className="
-                                    mt-6
-                                    flex
-                                    justify-between
-                                ">
+    mt-6
+    flex
+    justify-between
+    gap-2
+">
+
+
+                                                    <Button
+
+                                                        variant="outline"
+
+                                                        onClick={()=>
+                                                            navigate(
+                                                                `/templates/${template.id}`
+                                                            )
+                                                        }
+
+                                                    >
+
+                                                        <Eye className="
+            mr-2
+            h-4
+            w-4
+        "/>
+
+                                                        View
+
+                                                    </Button>
 
 
 
@@ -1222,26 +1300,22 @@ export function TemplatesPage(){
                                                         variant="outline"
 
                                                         onClick={()=>
-
-                                                            navigate(
-                                                                `/templates/${template.id}`
+                                                            handleExport(
+                                                                template.id
                                                             )
-
                                                         }
 
                                                     >
 
-                                                        <Eye className="
-                                            mr-2
-                                            h-4
-                                            w-4
-                                        "/>
+                                                        <Download className="
+            mr-2
+            h-4
+            w-4
+        "/>
 
-                                                        View
-
+                                                        Export
 
                                                     </Button>
-
 
 
 
@@ -1249,29 +1323,25 @@ export function TemplatesPage(){
                                                     <Button
 
                                                         onClick={()=>
-
                                                             navigate(
                                                                 `/templates/builder/${template.id}`
                                                             )
-
                                                         }
 
                                                     >
 
                                                         <Pencil className="
-                                            mr-2
-                                            h-4
-                                            w-4
-                                        "/>
+            mr-2
+            h-4
+            w-4
+        "/>
 
                                                         Edit
-
 
                                                     </Button>
 
 
                                                 </div>
-
 
 
                                             </CardContent>
