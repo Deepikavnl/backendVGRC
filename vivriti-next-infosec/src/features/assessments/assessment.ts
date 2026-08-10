@@ -1,334 +1,213 @@
 import axios from "@/api/axios";
 
-
+/* =========================================================
+   ASSESSMENT RESPONSE
+   ========================================================= */
 
 export interface Assessment {
+    id: number;
 
+    // Generated automatically by backend
+    code: string;
 
-    id:number;
+    entityId: number;
+    entityName: string;
 
+    templateName: string;
 
-    code:string;
+    reviewerName: string;
 
+    status: string;
 
-    entityId:number;
+    progress: number;
 
+    dueDate: string;
 
-    entityName:string;
+    submittedAt?: string;
 
+    completedAt?: string;
 
-    templateName:string;
+    score?: number;
 
+    riskLevel?: string;
 
-    reviewerName:string;
+    overdue?: boolean;
 
+    createdAt?: string;
 
-    status:string;
+    assessmentToken?: string;
 
+    assessmentLink?: string;
 
-    progress:number;
-
-
-    dueDate:string;
-
-
-    submittedAt?:string;
-
-
-    completedAt?:string;
-
-
-    score?:number;
-
-
-    riskLevel?:string;
-
-
-    overdue?:boolean;
-
-
-    createdAt?:string;
-
-
-    assessmentToken?:string;
-
-
-    assessmentLink?:string;
-
-
-    answers?:any[];
-
-
+    answers?: any[];
 }
 
 
-
-
-
+/* =========================================================
+   CREATE / UPDATE ASSESSMENT REQUEST
+   =========================================================
+   NOTE:
+   `code` is intentionally NOT included.
+   Backend generates the assessment code automatically.
+   ========================================================= */
 
 export interface AssessmentRequest {
 
+    entityId: number;
 
-    code:string;
+    templateName: string;
 
+    reviewerName: string;
 
-    entityId:number;
+    status: string;
 
+    progress: number;
 
-    templateName:string;
-
-
-    reviewerName:string;
-
-
-    status:string;
-
-
-    progress:number;
-
-
-    dueDate:string;
-
-
+    dueDate: string;
 }
 
 
-
-
-
-
-
+/* =========================================================
+   ASSESSMENT QUESTION
+   ========================================================= */
 
 export interface AssessmentQuestion {
 
+    id: number;
 
-    id:number;
+    sectionId: number;
 
+    questionText: string;
 
-    sectionId:number;
+    questionType: string;
 
+    mandatory: boolean;
 
-    questionText:string;
-
-
-    questionType:string;
-
-
-    mandatory:boolean;
-
-
-    weight:number;
-
-
+    weight: number;
 }
 
 
+/* =========================================================
+   ASSESSMENT API
+   ========================================================= */
 
 const assessmentApi = {
 
+    /* =====================================================
+       GET ALL ASSESSMENTS
+       ===================================================== */
 
+    getAllAssessments: async (): Promise<Assessment[]> => {
 
-    getAllAssessments:async():
-
-        Promise<Assessment[]>=>{
-
-
-        const response =
-
-            await axios.get(
-                "/assessments"
-            );
-
-
-        return response.data;
-
-
-    },
-
-
-
-
-
-
-
-
-
-    getAssessmentById:async(
-
-        id:number
-
-    ):Promise<Assessment>=>{
-
-
-        const response =
-
-            await axios.get(
-
-                `/assessments/${id}`
-
-            );
-
-
-        return response.data;
-
-
-    },
-
-
-
-
-
-
-
-
-
-    createAssessment:async(
-
-        data:AssessmentRequest
-
-    ):Promise<Assessment>=>{
-
-
-        const response =
-
-            await axios.post(
-
-                "/assessments",
-
-                data
-
-            );
-
-
-        return response.data;
-
-
-    },
-
-
-
-
-
-
-
-
-
-    updateAssessment:async(
-
-        id:number,
-
-        data:AssessmentRequest
-
-    ):Promise<Assessment>=>{
-
-
-        const response =
-
-            await axios.put(
-
-                `/assessments/${id}`,
-
-                data
-
-            );
-
-
-        return response.data;
-
-
-    },
-
-
-
-
-
-
-
-
-
-    deleteAssessment:async(
-
-        id:number
-
-    ):Promise<void>=>{
-
-
-        await axios.delete(
-
-            `/assessments/${id}`
-
+        const response = await axios.get(
+            "/assessments"
         );
 
-
+        return response.data;
     },
 
 
+    /* =====================================================
+       GET ASSESSMENT BY ID
+       ===================================================== */
 
+    getAssessmentById: async (
+        id: number
+    ): Promise<Assessment> => {
 
-
-
-
-
-
-    getQuestions:async(
-
-        assessmentId:number
-
-    ):Promise<AssessmentQuestion[]>=>{
-
-
-        const response =
-
-            await axios.get(
-
-                `/assessments/${assessmentId}/questions`
-
-            );
-
+        const response = await axios.get(
+            `/assessments/${id}`
+        );
 
         return response.data;
-
-
     },
 
 
+    /* =====================================================
+       CREATE ASSESSMENT
+       ===================================================== */
 
+    createAssessment: async (
+        data: AssessmentRequest
+    ): Promise<Assessment> => {
 
-
-
-
-
-
-    getAssessmentByToken:async(
-
-        token:string
-
-    ):Promise<Assessment>=>{
-
-
-        const response =
-
-            await axios.get(
-
-                `/assessments/token/${token}`
-
-            );
-
+        const response = await axios.post(
+            "/assessments",
+            data
+        );
 
         return response.data;
+    },
 
 
+    /* =====================================================
+       UPDATE ASSESSMENT
+       ===================================================== */
+
+    updateAssessment: async (
+        id: number,
+        data: AssessmentRequest
+    ): Promise<Assessment> => {
+
+        const response = await axios.put(
+            `/assessments/${id}`,
+            data
+        );
+
+        return response.data;
+    },
+
+
+    /* =====================================================
+       DELETE ASSESSMENT
+       ===================================================== */
+
+    deleteAssessment: async (
+        id: number
+    ): Promise<void> => {
+
+        await axios.delete(
+            `/assessments/${id}`
+        );
+    },
+
+
+    /* =====================================================
+       GET QUESTIONS FOR ASSESSMENT
+       ===================================================== */
+
+    getQuestions: async (
+        assessmentId: number
+    ): Promise<AssessmentQuestion[]> => {
+
+        const response = await axios.get(
+            `/assessments/${assessmentId}/questions`
+        );
+
+        return response.data;
+    },
+
+
+    /* =====================================================
+       GET ASSESSMENT BY TOKEN
+       ===================================================== */
+
+    getAssessmentByToken: async (
+        token: string
+    ): Promise<Assessment> => {
+
+        const response = await axios.get(
+            `/assessments/token/${token}`
+        );
+
+        return response.data;
     }
-
-
 
 };
 
 
-
-
-
-
-
+/* =========================================================
+   EXPORT
+   ========================================================= */
 
 export default assessmentApi;

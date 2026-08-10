@@ -5,32 +5,18 @@ import assessmentApi, {
     Assessment
 } from "./assessment";
 
-
-import {
-    PageHeader
-} from "@/components/common/page-header";
-
+import { PageHeader } from "@/components/common/page-header";
 
 import {
     Card,
     CardContent
 } from "@/components/ui/card";
 
+import { Button } from "@/components/ui/button";
 
-import {
-    Button
-} from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-
-import {
-    Input
-} from "@/components/ui/input";
-
-
-import {
-    Badge
-} from "@/components/ui/badge";
-
+import { Badge } from "@/components/ui/badge";
 
 import {
     Plus,
@@ -39,44 +25,34 @@ import {
     Trash2
 } from "lucide-react";
 
+import { toast } from "@/store/toast";
 
 
-
-export function AssessmentPage(){
-
+export function AssessmentPage() {
 
     const navigate = useNavigate();
 
+    const [assessments, setAssessments] =
+        useState<Assessment[]>([]);
+
+    const [loading, setLoading] =
+        useState<boolean>(true);
+
+    const [search, setSearch] =
+        useState<string>("");
 
 
-    const [assessments,setAssessments]
-        = useState<Assessment[]>([]);
+    /*
+     * LOAD ASSESSMENTS
+     */
+    const loadAssessments = async () => {
 
+        try {
 
-
-    const [loading,setLoading]
-        = useState<boolean>(true);
-
-
-
-    const [search,setSearch]
-        = useState<string>("");
-
-
-
-
-
-
-    const loadAssessments = async()=>{
-
-
-        try{
-
+            setLoading(true);
 
             const data =
                 await assessmentApi.getAllAssessments();
-
-
 
             setAssessments(
                 Array.isArray(data)
@@ -84,137 +60,127 @@ export function AssessmentPage(){
                     : []
             );
 
-
-        }
-        catch(error){
-
+        } catch (error) {
 
             console.error(
                 "Assessment loading failed",
                 error
             );
 
-
             setAssessments([]);
 
+            toast.error(
+                "Failed to load assessments"
+            );
 
-        }
-        finally{
-
+        } finally {
 
             setLoading(false);
 
-
         }
-
-
     };
 
 
+    /*
+     * INITIAL LOAD
+     */
+    useEffect(() => {
+
+        loadAssessments();
+
+    }, []);
 
 
+    /*
+     * SEARCH
+     */
+    const filteredAssessments =
+        useMemo(() => {
+
+            const searchText =
+                search
+                    .toLowerCase()
+                    .trim();
 
 
-    useEffect(()=>{
+            return assessments.filter(
+                (assessment) => {
+
+                    const searchableText =
+                        `
+                        ${assessment.code ?? ""}
+                        ${assessment.entityName ?? ""}
+                        ${assessment.templateName ?? ""}
+                        ${assessment.reviewerName ?? ""}
+                        ${assessment.status ?? ""}
+                        `
+                            .toLowerCase();
 
 
-        const load = async()=>{
+                    return searchableText.includes(
+                        searchText
+                    );
+                }
+            );
 
-            await loadAssessments();
-
-        };
-
-
-        load();
-
-
-    },[]);
-
+        }, [
+            assessments,
+            search
+        ]);
 
 
+    /*
+     * DELETE
+     */
+    const deleteAssessment = async (
+        id: number
+    ) => {
+
+        const confirmed =
+            window.confirm(
+                "Are you sure you want to delete this assessment?"
+            );
 
 
+        if (!confirmed) {
+            return;
+        }
 
 
-    const filteredAssessments = useMemo<Assessment[]>(()=>{
-
-
-        return assessments.filter(
-            (assessment: Assessment)=>{
-
-
-                const text =
-                    `${assessment.code ?? ""}
-${assessment.entityName ?? ""}
-${assessment.templateName ?? ""}
-${assessment.status ?? ""}`.toLowerCase();
-
-
-
-                return text.includes(
-                    search.toLowerCase()
-                );
-
-
-
-            });
-
-
-    },[
-        assessments,
-        search
-    ]);
-
-
-
-
-
-
-
-
-    const deleteAssessment = async(
-        id:number
-    )=>{
-
-
-        try{
-
+        try {
 
             await assessmentApi.deleteAssessment(
                 id
             );
 
 
+            toast.success(
+                "Assessment deleted successfully"
+            );
+
+
             await loadAssessments();
 
-
-
-        }
-        catch(error){
-
+        } catch (error) {
 
             console.error(
-                "Delete failed",
+                "Delete assessment failed",
                 error
             );
 
 
+            toast.error(
+                "Failed to delete assessment"
+            );
         }
-
-
     };
-
-
-
-
-
-
 
 
     return (
 
         <div className="space-y-6">
 
+            {/* PAGE HEADER */}
 
             <PageHeader
 
@@ -222,25 +188,21 @@ ${assessment.status ?? ""}`.toLowerCase();
 
                 description="Manage third party security assessments"
 
-
                 actions={
 
                     <Button
-
-                        onClick={()=>{
-
+                        onClick={() =>
                             navigate(
                                 "/assessments/new"
-                            );
-
-                        }}
-
+                            )
+                        }
                     >
 
-                        <Plus className="mr-2 h-4 w-4"/>
+                        <Plus
+                            className="mr-2 h-4 w-4"
+                        />
 
                         New Assessment
-
 
                     </Button>
 
@@ -249,363 +211,353 @@ ${assessment.status ?? ""}`.toLowerCase();
             />
 
 
-
-
-
-
-
-
+            {/* SEARCH + LIST */}
 
             <Card>
 
-
                 <CardContent className="p-6">
 
+                    {/* SEARCH */}
 
+                    <div className="mb-6">
 
-                    <div className="mb-5 flex gap-3">
-
-
-                        <div className="relative flex-1">
-
+                        <div className="relative">
 
                             <Search
-
-                                className="absolute left-3 top-3 h-4 w-4"
-
+                                className="
+                                    absolute
+                                    left-3
+                                    top-3
+                                    h-4
+                                    w-4
+                                    text-muted-foreground
+                                "
                             />
-
-
 
                             <Input
 
-
                                 className="pl-9"
-
 
                                 placeholder="Search assessments..."
 
-
                                 value={search}
 
-
-                                onChange={(event)=>{
-
+                                onChange={(event) =>
                                     setSearch(
                                         event.target.value
-                                    );
-
-                                }}
+                                    )
+                                }
 
                             />
 
-
                         </div>
-
 
                     </div>
 
 
+                    {/* LOADING */}
+
+                    {loading && (
+
+                        <div className="py-10 text-center">
+
+                            <p className="text-sm text-muted-foreground">
+
+                                Loading assessments...
+
+                            </p>
+
+                        </div>
+
+                    )}
 
 
+                    {/* EMPTY */}
 
+                    {!loading &&
+                        filteredAssessments.length === 0 && (
 
+                            <div className="py-10 text-center">
 
+                                <p className="font-medium">
 
+                                    No assessments found
 
-                    {
-                        loading ?
-
-
-                            (
-
-                                <p>
-                                    Loading assessments...
                                 </p>
 
-                            )
+                                <p className="mt-1 text-sm text-muted-foreground">
+
+                                    Create a new assessment
+                                    to get started.
+
+                                </p>
+
+                            </div>
+
+                        )}
 
 
-                            :
+                    {/* ASSESSMENTS */}
 
+                    {!loading &&
+                        filteredAssessments.length > 0 && (
 
-                            filteredAssessments.length === 0 ?
+                            <div className="space-y-4">
 
+                                {filteredAssessments.map(
+                                    (assessment) => (
 
-                                (
+                                        <div
+                                            key={
+                                                assessment.id
+                                            }
+                                            className="
+                                                rounded-lg
+                                                border
+                                                p-5
+                                                transition
+                                                hover:bg-muted/30
+                                            "
+                                        >
 
-                                    <p>
-                                        No assessments found
-                                    </p>
+                                            {/* TOP */}
 
-                                )
+                                            <div className="
+                                                flex
+                                                items-start
+                                                justify-between
+                                                gap-4
+                                            ">
 
+                                                <div>
 
-                                :
+                                                    {/* GENERATED CODE */}
 
+                                                    <h3 className="
+                                                        text-lg
+                                                        font-semibold
+                                                    ">
 
-                                (
-
-                                    <div className="space-y-4">
-
-
-
-                                        {
-                                            filteredAssessments.map(
-                                                (assessment)=>(
-
-
-                                                    <div
-
-                                                        key={
-                                                            assessment.id
+                                                        {
+                                                            assessment.code
                                                         }
 
-                                                        className="rounded-lg border p-4"
+                                                    </h3>
 
-                                                    >
 
+                                                    {/* ENTITY */}
 
+                                                    <p className="
+                                                        mt-1
+                                                        text-sm
+                                                        text-muted-foreground
+                                                    ">
 
-                                                        <div className="flex justify-between">
+                                                        {
+                                                            assessment.entityName ||
+                                                            "-"
+                                                        }
 
+                                                    </p>
 
-                                                            <div>
+                                                </div>
 
 
-                                                                <h3 className="font-semibold">
+                                                {/* STATUS */}
 
-                                                                    {
-                                                                        assessment.code
-                                                                    }
+                                                <Badge>
 
-                                                                </h3>
+                                                    {
+                                                        assessment.status ||
+                                                        "PENDING"
+                                                    }
 
+                                                </Badge>
 
-                                                                <p className="text-sm">
+                                            </div>
 
-                                                                    {
-                                                                        assessment.entityName
-                                                                    }
 
-                                                                </p>
+                                            {/* DETAILS */}
 
+                                            <div className="
+                                                mt-5
+                                                grid
+                                                gap-5
+                                                md:grid-cols-4
+                                            ">
 
-                                                            </div>
+                                                {/* TEMPLATE */}
 
+                                                <div>
 
+                                                    <p className="
+                                                        text-xs
+                                                        text-muted-foreground
+                                                    ">
 
-                                                            <Badge>
+                                                        Template
 
-                                                                {
-                                                                    assessment.status
-                                                                }
+                                                    </p>
 
-                                                            </Badge>
+                                                    <p className="mt-1 font-medium">
 
+                                                        {
+                                                            assessment.templateName ||
+                                                            "-"
+                                                        }
 
-                                                        </div>
+                                                    </p>
 
+                                                </div>
 
 
+                                                {/* REVIEWER */}
 
+                                                <div>
 
+                                                    <p className="
+                                                        text-xs
+                                                        text-muted-foreground
+                                                    ">
 
+                                                        Reviewer
 
+                                                    </p>
 
+                                                    <p className="mt-1 font-medium">
 
-                                                        <div className="mt-4 grid gap-4 md:grid-cols-4">
+                                                        {
+                                                            assessment.reviewerName ||
+                                                            "-"
+                                                        }
 
+                                                    </p>
 
-                                                            <div>
+                                                </div>
 
-                                                                <p className="text-xs">
 
-                                                                    Template
+                                                {/* PROGRESS */}
 
-                                                                </p>
+                                                <div>
 
+                                                    <p className="
+                                                        text-xs
+                                                        text-muted-foreground
+                                                    ">
 
-                                                                <p>
+                                                        Progress
 
-                                                                    {
-                                                                        assessment.templateName
-                                                                    }
+                                                    </p>
 
-                                                                </p>
+                                                    <p className="mt-1 font-medium">
 
+                                                        {
+                                                            assessment.progress ??
+                                                            0
+                                                        }%
 
-                                                            </div>
+                                                    </p>
 
+                                                </div>
 
 
+                                                {/* DUE DATE */}
 
+                                                <div>
 
+                                                    <p className="
+                                                        text-xs
+                                                        text-muted-foreground
+                                                    ">
 
-                                                            <div>
+                                                        Due Date
 
-                                                                <p className="text-xs">
+                                                    </p>
 
-                                                                    Reviewer
+                                                    <p className="mt-1 font-medium">
 
-                                                                </p>
+                                                        {
+                                                            assessment.dueDate ||
+                                                            "-"
+                                                        }
 
+                                                    </p>
 
-                                                                <p>
+                                                </div>
 
-                                                                    {
-                                                                        assessment.reviewerName
-                                                                    }
+                                            </div>
 
-                                                                </p>
 
+                                            {/* ACTIONS */}
 
-                                                            </div>
+                                            <div className="
+                                                mt-5
+                                                flex
+                                                gap-3
+                                            ">
 
+                                                {/* VIEW */}
 
+                                                <Button
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/assessments/${assessment.id}`
+                                                        )
+                                                    }
+                                                >
 
+                                                    <Eye
+                                                        className="
+                                                            mr-2
+                                                            h-4
+                                                            w-4
+                                                        "
+                                                    />
 
+                                                    View
 
+                                                </Button>
 
-                                                            <div>
 
-                                                                <p className="text-xs">
+                                                {/* DELETE */}
 
-                                                                    Progress
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={() =>
+                                                        deleteAssessment(
+                                                            assessment.id
+                                                        )
+                                                    }
+                                                >
 
-                                                                </p>
+                                                    <Trash2
+                                                        className="
+                                                            mr-2
+                                                            h-4
+                                                            w-4
+                                                        "
+                                                    />
 
+                                                    Delete
 
-                                                                <p>
+                                                </Button>
 
-                                                                    {
-                                                                        assessment.progress
-                                                                    }%
+                                            </div>
 
-                                                                </p>
+                                        </div>
 
+                                    )
+                                )}
 
-                                                            </div>
+                            </div>
 
-
-
-
-
-
-
-                                                            <div>
-
-                                                                <p className="text-xs">
-
-                                                                    Due Date
-
-                                                                </p>
-
-
-                                                                <p>
-
-                                                                    {
-                                                                        assessment.dueDate
-                                                                    }
-
-                                                                </p>
-
-
-                                                            </div>
-
-
-                                                        </div>
-
-
-
-
-
-
-
-
-
-                                                        <div className="mt-4 flex gap-3">
-
-
-                                                            <Button
-
-                                                                onClick={()=>{
-
-                                                                    navigate(
-                                                                        `/assessments/${assessment.id}`
-                                                                    );
-
-                                                                }}
-
-                                                            >
-
-                                                                <Eye className="mr-2 h-4 w-4"/>
-
-                                                                View
-
-
-                                                            </Button>
-
-
-
-
-
-
-                                                            <Button
-
-
-                                                                onClick={()=>{
-
-                                                                    deleteAssessment(
-                                                                        assessment.id
-                                                                    );
-
-                                                                }}
-
-                                                            >
-
-                                                                <Trash2 className="mr-2 h-4 w-4"/>
-
-                                                                Delete
-
-
-                                                            </Button>
-
-
-
-                                                        </div>
-
-
-
-
-
-                                                    </div>
-
-
-                                                ))
-
-                                        }
-
-
-
-                                    </div>
-
-                                )
-
-                    }
-
-
-
+                        )}
 
                 </CardContent>
 
-
             </Card>
-
 
         </div>
 
     );
-
-
 }

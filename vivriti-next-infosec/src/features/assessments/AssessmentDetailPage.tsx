@@ -1,711 +1,478 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-
 import assessmentApi, {
-  Assessment
+    Assessment,
 } from "./assessment";
 
-
-
 import {
-  PageHeader
+    PageHeader,
 } from "@/components/common/page-header";
 
-
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 
-
 import {
-  Button
+    Button,
 } from "@/components/ui/button";
 
-
 import {
-  Badge
+    Badge,
 } from "@/components/ui/badge";
 
-
 import {
-  Progress
+    Progress,
 } from "@/components/ui/progress";
 
-
 import {
-  ArrowLeft,
-  Trash2,
-  Building2,
-  FileText,
-  User,
-  CalendarDays,
-  Copy
+    ArrowLeft,
+    Trash2,
+    Building2,
+    FileText,
+    User,
+    CalendarDays,
+    Copy,
 } from "lucide-react";
 
-
 import {
-  toast
+    toast,
 } from "@/store/toast";
 
+export function AssessmentDetailPage() {
 
+    const { id } = useParams();
 
+    const navigate = useNavigate();
 
+    const [assessment, setAssessment] =
+        useState<Assessment | null>(null);
 
-export function AssessmentDetailPage(){
+    const [loading, setLoading] =
+        useState(true);
 
+    /*
+     * LOAD ASSESSMENT
+     */
+    const loadAssessment = async () => {
 
+        try {
 
-  const {
-    id
-  } = useParams();
-
-
-
-  const navigate =
-      useNavigate();
-
-
-
-
-  const [assessment,setAssessment]
-      = useState<Assessment | null>(null);
-
-
-
-  const [loading,setLoading]
-      = useState(true);
-
-
-
-
-
-
-
-  const loadAssessment = async()=>{
-
-
-    try{
-
-
-      if(!id)
-        return;
-
-
-
-      const data =
-          await assessmentApi
-              .getAssessmentById(
-                  (id)
-              );
-
-
-
-      setAssessment(data);
-
-
-
-    }
-    catch(error){
-
-
-      console.error(
-          "Assessment details failed",
-          error
-      );
-
-
-    }
-    finally{
-
-
-      setLoading(false);
-
-
-    }
-
-
-  };
-
-
-
-
-
-
-
-  useEffect(()=>{
-
-
-    loadAssessment();
-
-
-  },[id]);
-
-
-
-
-
-
-
-
-
-  const deleteAssessment = async()=>{
-
-
-    if(!assessment)
-      return;
-
-
-
-    try{
-
-
-      await assessmentApi
-          .deleteAssessment(
-              assessment.id
-          );
-
-
-
-      toast.success(
-          "Assessment deleted"
-      );
-
-
-
-      navigate(
-          "/assessments"
-      );
-
-
-    }
-    catch(error){
-
-
-      toast.error(
-          "Delete failed"
-      );
-
-
-    }
-
-
-  };
-
-
-
-
-
-
-
-
-
-  if(loading){
-
-
-    return (
-
-        <div className="p-6">
-
-          Loading assessment...
-
-        </div>
-
-    );
-
-
-  }
-
-
-
-
-
-
-
-  if(!assessment){
-
-
-    return (
-
-        <div className="p-6">
-
-          Assessment not found
-
-        </div>
-
-    );
-
-
-  }
-
-
-
-
-
-
-
-  return (
-
-      <div className="space-y-6">
-
-
-
-
-
-        <PageHeader
-
-
-            title={
-              assessment.code
+            if (!id) {
+                return;
             }
 
+            const data =
+                await assessmentApi.getAssessmentById(
+                    Number(id)
+                );
 
-            description="Assessment Details"
+            setAssessment(data);
 
+        } catch (error) {
 
+            console.error(
+                "Assessment details failed",
+                error
+            );
 
-            actions={
+            toast.error(
+                "Failed to load assessment"
+            );
 
-              <div className="flex gap-2">
+        } finally {
 
+            setLoading(false);
 
+        }
+    };
+
+    useEffect(() => {
+
+        loadAssessment();
+
+    }, [id]);
+
+    /*
+     * DELETE ASSESSMENT
+     */
+    const deleteAssessment = async () => {
+
+        if (!assessment) {
+            return;
+        }
+
+        try {
+
+            await assessmentApi.deleteAssessment(
+                assessment.id
+            );
+
+            toast.success(
+                "Assessment deleted successfully"
+            );
+
+            navigate("/assessments");
+
+        } catch (error) {
+
+            console.error(
+                "Delete assessment failed",
+                error
+            );
+
+            toast.error(
+                "Delete failed"
+            );
+
+        }
+    };
+
+    /*
+     * LOADING
+     */
+    if (loading) {
+
+        return (
+            <div className="flex items-center justify-center p-10">
+                Loading assessment...
+            </div>
+        );
+
+    }
+
+    /*
+     * NOT FOUND
+     */
+    if (!assessment) {
+
+        return (
+            <div className="space-y-4 p-6">
 
                 <Button
-
                     variant="outline"
-
-                    onClick={()=>
-                        navigate(
-                            "/assessments"
-                        )
+                    onClick={() =>
+                        navigate("/assessments")
                     }
-
                 >
-
-                  <ArrowLeft className="mr-2 h-4 w-4"/>
-
-                  Back
-
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
                 </Button>
 
+                <p className="text-muted-foreground">
+                    Assessment not found.
+                </p>
 
+            </div>
+        );
 
+    }
 
+    return (
+        <div className="space-y-6">
 
+            {/* ============================= */}
+            {/* PAGE HEADER */}
+            {/* ============================= */}
 
-                <Button
+            <PageHeader
+                title={assessment.code}
+                description="Assessment Details"
+                actions={
+                    <div className="flex gap-2">
 
-                    variant="destructive"
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                navigate("/assessments")
+                            }
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back
+                        </Button>
 
-                    onClick={
-                      deleteAssessment
-                    }
+                        <Button
+                            variant="destructive"
+                            onClick={deleteAssessment}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </Button>
 
-                >
-
-                  <Trash2 className="mr-2 h-4 w-4"/>
-
-                  Delete
-
-
-                </Button>
-
-
-
-              </div>
-
-            }
-
-
-        />
-
-
-
-
-
-
-
-
-
-        <div className="grid gap-5 md:grid-cols-3">
-
-
-
-
-
-          <Card>
-
-            <CardHeader>
-
-              <CardTitle>
-                Status
-              </CardTitle>
-
-            </CardHeader>
-
-
-            <CardContent>
-
-              <Badge>
-
-                {
-                  assessment.status
+                    </div>
                 }
+            />
 
-              </Badge>
+            {/* ============================= */}
+            {/* SUMMARY CARDS */}
+            {/* ============================= */}
 
-            </CardContent>
+            <div className="grid gap-5 md:grid-cols-3">
 
+                {/* STATUS */}
 
-          </Card>
+                <Card>
 
+                    <CardHeader>
+                        <CardTitle>
+                            Status
+                        </CardTitle>
+                    </CardHeader>
 
+                    <CardContent>
 
+                        <Badge>
+                            {assessment.status}
+                        </Badge>
 
+                    </CardContent>
 
+                </Card>
 
-          <Card>
+                {/* PROGRESS */}
 
-            <CardHeader>
+                <Card>
 
-              <CardTitle>
-                Progress
-              </CardTitle>
+                    <CardHeader>
+                        <CardTitle>
+                            Progress
+                        </CardTitle>
+                    </CardHeader>
 
-            </CardHeader>
+                    <CardContent>
 
+                        <p className="mb-3 text-3xl font-bold">
+                            {assessment.progress}%
+                        </p>
 
-            <CardContent>
+                        <Progress
+                            value={
+                                assessment.progress ?? 0
+                            }
+                        />
 
+                    </CardContent>
 
-              <p className="text-3xl font-bold">
+                </Card>
 
-                {
-                  assessment.progress
-                }%
+                {/* RISK */}
 
-              </p>
+                <Card>
 
+                    <CardHeader>
+                        <CardTitle>
+                            Risk
+                        </CardTitle>
+                    </CardHeader>
 
+                    <CardContent>
 
-              <Progress
+                        <Badge>
+                            {assessment.riskLevel ?? "LOW"}
+                        </Badge>
 
-                  value={
-                    assessment.progress
-                  }
+                    </CardContent>
 
-              />
-
-            </CardContent>
-
-
-          </Card>
-
-
-
-
-
-
-
-          <Card>
-
-            <CardHeader>
-
-              <CardTitle>
-                Risk
-              </CardTitle>
-
-            </CardHeader>
-
-
-            <CardContent>
-
-              <Badge>
-
-                {
-                    assessment.riskLevel ??
-                    "LOW"
-                }
-
-              </Badge>
-
-            </CardContent>
-
-
-          </Card>
-
-
-
-        </div>
-
-
-
-
-
-
-
-
-
-
-        <Card>
-
-
-          <CardHeader>
-
-            <CardTitle>
-              Information
-            </CardTitle>
-
-          </CardHeader>
-
-
-
-          <CardContent className="space-y-5">
-
-
-
-
-
-            <div className="flex gap-3">
-
-              <Building2/>
-
-
-              <div>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Entity
-
-                </p>
-
-
-                <p>
-
-                  {
-                    assessment.entityName
-                  }
-
-                </p>
-
-
-              </div>
-
+                </Card>
 
             </div>
 
-
-
-
-
-
-
-
-
-            <div className="flex gap-3">
-
-              <FileText/>
-
-
-              <div>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Template
-
-                </p>
-
-
-                <p>
-
-                  {
-                    assessment.templateName
-                  }
-
-                </p>
-
-
-              </div>
-
-
-            </div>
-
-
-
-
-
-
-
-
-
-            <div className="flex gap-3">
-
-              <User/>
-
-
-              <div>
-
-                <p className="text-sm text-muted-foreground">
-
-                  Reviewer
-
-                </p>
-
-
-                <p>
-
-                  {
-                    assessment.reviewerName
-                  }
-
-                </p>
-
-
-              </div>
-
-
-            </div>
-
-
-
-
-
-
-
-
-            <div className="flex gap-3">
-
-
-              <CalendarDays/>
-
-
-              <div>
-
-
-                <p className="text-sm text-muted-foreground">
-
-                  Due Date
-
-                </p>
-
-
-                <p>
-
-                  {
-                    assessment.dueDate
-                  }
-
-                </p>
-
-
-              </div>
-
-
-            </div>
-
-
-
-
-
-
-
-          </CardContent>
-
-
-        </Card>
-
-
-
-
-
-
-
-
-
-        {
-            assessment.assessmentLink &&
+            {/* ============================= */}
+            {/* INFORMATION */}
+            {/* ============================= */}
 
             <Card>
 
+                <CardHeader>
 
-              <CardHeader>
+                    <CardTitle>
+                        Assessment Information
+                    </CardTitle>
 
-                <CardTitle>
-                  Vendor Assessment Link
-                </CardTitle>
+                </CardHeader>
 
-              </CardHeader>
+                <CardContent className="space-y-5">
 
+                    {/* ASSESSMENT CODE */}
 
+                    <div className="flex items-start gap-3">
 
-              <CardContent>
+                        <FileText className="mt-1 h-5 w-5 text-muted-foreground" />
 
+                        <div>
 
-                <div className="flex gap-2">
+                            <p className="text-sm text-muted-foreground">
+                                Assessment Code
+                            </p>
 
+                            <p className="font-medium">
+                                {assessment.code}
+                            </p>
 
-                  <input
+                        </div>
 
-                      readOnly
+                    </div>
 
-                      value={
-                        assessment.assessmentLink
-                      }
+                    {/* ENTITY */}
 
-                      className="flex-1 rounded border px-3 py-2"
+                    <div className="flex items-start gap-3">
 
-                  />
+                        <Building2 className="mt-1 h-5 w-5 text-muted-foreground" />
 
+                        <div>
 
+                            <p className="text-sm text-muted-foreground">
+                                Entity
+                            </p>
 
-                  <Button
+                            <p className="font-medium">
+                                {assessment.entityName || "-"}
+                            </p>
 
-                      variant="outline"
+                        </div>
 
-                      onClick={()=>{
+                    </div>
 
+                    {/* TEMPLATE */}
 
-                        navigator.clipboard
-                            .writeText(
-                                assessment.assessmentLink ?? ""
-                            );
+                    <div className="flex items-start gap-3">
 
+                        <FileText className="mt-1 h-5 w-5 text-muted-foreground" />
 
-                        toast.success(
-                            "Link copied"
-                        );
+                        <div>
 
+                            <p className="text-sm text-muted-foreground">
+                                Template
+                            </p>
 
-                      }}
+                            <p className="font-medium">
+                                {assessment.templateName || "-"}
+                            </p>
 
-                  >
+                        </div>
 
-                    <Copy/>
+                    </div>
 
-                  </Button>
+                    {/* REVIEWER */}
 
+                    <div className="flex items-start gap-3">
 
+                        <User className="mt-1 h-5 w-5 text-muted-foreground" />
 
-                </div>
+                        <div>
 
+                            <p className="text-sm text-muted-foreground">
+                                Reviewer
+                            </p>
 
-              </CardContent>
+                            <p className="font-medium">
+                                {assessment.reviewerName || "-"}
+                            </p>
 
+                        </div>
+
+                    </div>
+
+                    {/* DUE DATE */}
+
+                    <div className="flex items-start gap-3">
+
+                        <CalendarDays className="mt-1 h-5 w-5 text-muted-foreground" />
+
+                        <div>
+
+                            <p className="text-sm text-muted-foreground">
+                                Due Date
+                            </p>
+
+                            <p className="font-medium">
+                                {assessment.dueDate || "-"}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </CardContent>
 
             </Card>
 
-        }
+            {/* ============================= */}
+            {/* VENDOR ASSESSMENT LINK */}
+            {/* ============================= */}
 
+            {assessment.assessmentLink && (
 
+                <Card>
 
+                    <CardHeader>
 
+                        <CardTitle>
+                            Vendor Assessment Link
+                        </CardTitle>
 
-      </div>
+                    </CardHeader>
 
-  );
+                    <CardContent>
 
+                        <div className="flex gap-2">
 
+                            <input
+                                readOnly
+                                value={
+                                    assessment.assessmentLink
+                                }
+                                className="flex-1 rounded-md border bg-muted/30 px-3 py-2 text-sm"
+                            />
+
+                            <Button
+                                variant="outline"
+                                onClick={async () => {
+
+                                    try {
+
+                                        await navigator.clipboard.writeText(
+                                            assessment.assessmentLink ?? ""
+                                        );
+
+                                        toast.success(
+                                            "Link copied"
+                                        );
+
+                                    } catch (error) {
+
+                                        console.error(
+                                            "Copy failed",
+                                            error
+                                        );
+
+                                        toast.error(
+                                            "Failed to copy link"
+                                        );
+                                    }
+
+                                }}
+                            >
+
+                                <Copy className="mr-2 h-4 w-4" />
+
+                                Copy
+
+                            </Button>
+
+                        </div>
+
+                    </CardContent>
+
+                </Card>
+
+            )}
+
+        </div>
+    );
 }
+

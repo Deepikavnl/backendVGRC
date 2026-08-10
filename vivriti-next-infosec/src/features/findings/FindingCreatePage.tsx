@@ -427,23 +427,19 @@ export function FindingCreatePage(){
 
                 <div>
 
-                    <Label>Owner (Risk Team)</Label>
+                    <Label>Assign Risk Team</Label>
 
-                    <Input
-
-                        placeholder="Enter risk team"
-
+                    <Select
                         value={form.owner}
-
-                        onChange={(e)=>
-
-                            handleChange(
-                                "owner",
-                                e.target.value
-                            )
-
+                        onValueChange={(value) =>
+                            handleChange("owner", value)
                         }
-
+                        options={[
+                            {
+                                label: "Risk Team",
+                                value: "RISK_TEAM",
+                            },
+                        ]}
                     />
 
                 </div>
