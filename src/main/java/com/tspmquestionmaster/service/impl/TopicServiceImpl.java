@@ -17,7 +17,8 @@ import com.tspmquestionmaster.repository.TopicRepository;
 import com.tspmquestionmaster.service.TopicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import com.tspmquestionmaster.dto.response.TopicQuestionResponse;
+import com.tspmquestionmaster.entity.Question;
 import java.util.List;
 import com.tspmquestionmaster.repository.QuestionRepository;
 @Service
@@ -28,6 +29,7 @@ public class TopicServiceImpl implements TopicService {
     private final TopicMapper topicMapper;
 
     private final QuestionRepository questionRepository;
+
 
     @Override
     public TopicResponse createTopic(CreateTopicRequest request) {
@@ -147,10 +149,31 @@ public class TopicServiceImpl implements TopicService {
 
         TopicResponse response = topicMapper.toResponse(topic);
 
+        // Set question count
         response.setQuestionCount(
                 questionRepository.countByTopicId(topic.getId())
         );
 
+        // Fetch questions for this topic
+        List<TopicQuestionResponse> questionResponses = questionRepository
+                .findByTopicId(topic.getId())
+                .stream()
+                .map(question -> {
+                    TopicQuestionResponse questionResponse = new TopicQuestionResponse();
+
+                    questionResponse.setId(question.getId());
+                    questionResponse.setCode(question.getCode());
+                    questionResponse.setQuestionText(question.getQuestionText());
+                    questionResponse.setQuestionType(question.getQuestionType());
+                    questionResponse.setWeight(question.getWeight());
+                    questionResponse.setMandatory(question.getMandatory());
+                    questionResponse.setStatus(question.getStatus());
+
+                    return questionResponse;
+                })
+                .toList();
+
+        response.setQuestions(questionResponses);
+
         return response;
-    }
-}
+    }}
