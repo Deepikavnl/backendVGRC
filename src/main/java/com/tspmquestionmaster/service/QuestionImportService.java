@@ -1,4 +1,8 @@
 package com.tspmquestionmaster.service;
 
-public class QuestionImportService {
+import org.springframework.web.multipart.MultipartFile;
+
+public interface QuestionImportService {
+
+    int importQuestions(MultipartFile file);
 }

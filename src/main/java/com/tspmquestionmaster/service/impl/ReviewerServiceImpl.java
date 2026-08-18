@@ -223,8 +223,8 @@ public class ReviewerServiceImpl implements ReviewerService {
 
 
         List<VendorQuestionnaireAnswer> answers =
-                answerRepository.findByAssessment(
-                        assessment
+                answerRepository.findByAssessment_Id(
+                        assessment.getId()
                 );
 
 

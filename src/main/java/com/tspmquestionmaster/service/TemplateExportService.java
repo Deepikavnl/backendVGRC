@@ -1,4 +1,8 @@
+
 package com.tspmquestionmaster.service;
 
-public class TemplateExportService {
+public interface TemplateExportService {
+
+    byte[] exportTemplate(Long templateId);
+
 }

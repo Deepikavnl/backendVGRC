@@ -1,157 +1,139 @@
-package com.tspmquestionmaster.service.impl;
 
+        package com.tspmquestionmaster.service.impl;
 
 import com.tspmquestionmaster.dto.request.CreateFindingRequest;
 import com.tspmquestionmaster.dto.response.FindingResponse;
-import com.tspmquestionmaster.enums.FindingSeverity;
-import com.tspmquestionmaster.repository.FindingRepository;
-import com.tspmquestionmaster.repository.EntityAssessmentRepository;
-import com.tspmquestionmaster.service.FindingService;
-import com.tspmquestionmaster.entity.Finding;
-import com.tspmquestionmaster.enums.FindingStatus;
 import com.tspmquestionmaster.entity.EntityAssessment;
+import com.tspmquestionmaster.entity.Finding;
+import com.tspmquestionmaster.enums.FindingSeverity;
+import com.tspmquestionmaster.enums.FindingStatus;
+import com.tspmquestionmaster.repository.EntityAssessmentRepository;
+import com.tspmquestionmaster.repository.FindingRepository;
+import com.tspmquestionmaster.service.FindingService;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class FindingServiceImpl implements FindingService {
 
-
-
     private final FindingRepository findingRepository;
-
 
     private final EntityAssessmentRepository assessmentRepository;
 
-
-
+    /*
+     * =========================================================
+     * CREATE FINDING
+     * =========================================================
+     */
     @Override
-    public FindingResponse createFinding(CreateFindingRequest request) {
-
-
+    public FindingResponse createFinding(
+            CreateFindingRequest request
+    ) {
 
         EntityAssessment assessment =
-                assessmentRepository.findById(request.getAssessmentId())
-                        .orElseThrow(
-                                () -> new RuntimeException(
-                                        "Assessment not found"
-                                )
-                        );
-
-
+                assessmentRepository.findById(
+                        request.getAssessmentId()
+                ).orElseThrow(
+                        () -> new RuntimeException(
+                                "Assessment not found"
+                        )
+                );
 
         Finding finding = new Finding();
 
-
-
         finding.setCode(
-                "FND-" + UUID.randomUUID()
-                        .toString()
-                        .substring(0,8)
-                        .toUpperCase()
+                "FND-" +
+                        UUID.randomUUID()
+                                .toString()
+                                .substring(0, 8)
+                                .toUpperCase()
         );
-
-
 
         finding.setTitle(
                 request.getTitle()
         );
 
-
         finding.setDescription(
                 request.getDescription()
         );
-
 
         finding.setRecommendation(
                 request.getRecommendation()
         );
 
-
         finding.setOwner(
                 request.getOwner()
         );
-
 
         finding.setDueDate(
                 request.getDueDate()
         );
 
-
         finding.setTopic(
                 request.getTopic()
         );
-
 
         finding.setQuestionId(
                 request.getQuestionId()
         );
 
-
         finding.setAssessment(
                 assessment
         );
 
-
-
         finding.setSeverity(
-
                 FindingSeverity.valueOf(
                         request.getSeverity()
                                 .trim()
                                 .toUpperCase()
                 )
-
-
         );
-
-
 
         finding.setStatus(
                 FindingStatus.OPEN
         );
 
-
-
         Finding saved =
-                findingRepository.save(finding);
-
-
+                findingRepository.save(
+                        finding
+                );
 
         return mapToResponse(saved);
-
     }
 
-
+    /*
+     * =========================================================
+     * GET ALL FINDINGS
+     * =========================================================
+     */
     @Override
     public List<FindingResponse> getAllFindings() {
 
-
-        return findingRepository.findAllWithEntity()
+        return findingRepository
+                .findAllWithEntity()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
-
     }
 
-
-
-
-
+    /*
+     * =========================================================
+     * GET FINDING BY ID
+     * =========================================================
+     */
     @Override
-    public FindingResponse getFindingById(Long id) {
-
+    public FindingResponse getFindingById(
+            Long id
+    ) {
 
         Finding finding =
                 findingRepository.findById(id)
@@ -161,22 +143,38 @@ public class FindingServiceImpl implements FindingService {
                                 )
                         );
 
-
         return mapToResponse(finding);
-
     }
 
+    /*
+     * =========================================================
+     * GET FINDINGS BY ASSESSMENT
+     *
+     * GET:
+     * /api/findings/assessment/{assessmentId}
+     * =========================================================
+     */
+    @Override
+    public List<FindingResponse> getFindingsByAssessment(Long assessmentId) {
 
+        return findingRepository
+                .findByAssessment_Id(assessmentId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
 
-
-
+    /*
+     * =========================================================
+     * UPDATE FINDING STATUS
+     * =========================================================
+     */
     @Override
     public FindingResponse updateStatus(
             Long id,
             String status
     ) {
 
-
         Finding finding =
                 findingRepository.findById(id)
                         .orElseThrow(
@@ -185,104 +183,94 @@ public class FindingServiceImpl implements FindingService {
                                 )
                         );
 
-
-
         finding.setStatus(
                 FindingStatus.valueOf(
-                        status.toUpperCase()
+                        status
+                                .trim()
+                                .toUpperCase()
                 )
         );
 
+        Finding saved =
+                findingRepository.save(
+                        finding
+                );
 
-        return mapToResponse(
-                findingRepository.save(finding)
-        );
-
+        return mapToResponse(saved);
     }
 
-
-
-
-
-
+    /*
+     * =========================================================
+     * MAP ENTITY -> RESPONSE
+     * =========================================================
+     */
     private FindingResponse mapToResponse(
             Finding finding
-    ){
-
+    ) {
 
         FindingResponse response =
                 new FindingResponse();
-
-
 
         response.setId(
                 finding.getId()
         );
 
-
         response.setCode(
                 finding.getCode()
         );
-
 
         response.setTitle(
                 finding.getTitle()
         );
 
-
         response.setDescription(
                 finding.getDescription()
         );
-
 
         response.setSeverity(
                 finding.getSeverity()
                         .name()
         );
 
-
         response.setStatus(
                 finding.getStatus()
                         .name()
         );
 
-
         response.setOwner(
                 finding.getOwner()
         );
-
 
         response.setDueDate(
                 finding.getDueDate()
         );
 
-
         response.setRecommendation(
                 finding.getRecommendation()
         );
-
 
         response.setTopic(
                 finding.getTopic()
         );
 
-
         response.setQuestionId(
                 finding.getQuestionId()
         );
 
-
-
-        if(finding.getAssessment()!=null){
-
+        /*
+         * Assessment information
+         */
+        if (finding.getAssessment() != null) {
 
             response.setAssessmentId(
                     finding.getAssessment()
                             .getId()
             );
 
-
-            if(finding.getAssessment().getEntity()!=null){
+            /*
+             * Entity information
+             */
+            if (finding.getAssessment().getEntity() != null) {
 
                 response.setEntityId(
                         finding.getAssessment()
@@ -290,27 +278,19 @@ public class FindingServiceImpl implements FindingService {
                                 .getId()
                 );
 
-
                 response.setEntityName(
                         finding.getAssessment()
                                 .getEntity()
                                 .getName()
                 );
-
             }
-
         }
-
-
 
         response.setCreatedAt(
                 finding.getCreatedAt()
         );
 
-
         return response;
-
     }
-
-
 }
+

@@ -1,4 +1,12 @@
 package com.tspmquestionmaster.service;
 
-public class ExcelTemplateService {
+import org.springframework.web.multipart.MultipartFile;
+
+public interface ExcelTemplateService {
+
+    byte[] generateTopicImportTemplate();
+
+    byte[] generateQuestionImportTemplate();
+
+    void validateTemplate(MultipartFile file);
 }

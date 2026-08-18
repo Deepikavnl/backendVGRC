@@ -5,6 +5,8 @@ import {
     ArrowRight,
     Building2,
     CalendarDays,
+    ChevronLeft,
+    ChevronRight,
     ClipboardCheck,
     FileText,
     RefreshCw,
@@ -40,6 +42,10 @@ import { vendorApi } from "@/api/vendorApi";
 import { toast } from "@/store/toast";
 
 
+/* =========================================================
+ * VENDOR ASSESSMENT TYPE
+ * ========================================================= */
+
 interface VendorAssessment {
     id: number;
     code?: string;
@@ -52,25 +58,21 @@ interface VendorAssessment {
     dueDate?: string;
     submittedAt?: string;
     completedAt?: string;
+    createdAt?: string;
     score?: number;
     riskLevel?: string;
 }
 
 
-/*
- * ==========================================
+/* =========================================================
  * STATUS STYLE
- * ==========================================
- */
+ * ========================================================= */
 
 const getStatusStyle = (status?: string) => {
 
     switch (status) {
 
-        /*
-         * GREEN
-         * Approved / Completed
-         */
+        /* GREEN */
 
         case "APPROVED":
         case "COMPLETED":
@@ -93,10 +95,7 @@ const getStatusStyle = (status?: string) => {
             };
 
 
-        /*
-         * YELLOW
-         * Submitted / Under Review
-         */
+        /* YELLOW */
 
         case "SUBMITTED":
         case "UNDER_REVIEW":
@@ -119,10 +118,7 @@ const getStatusStyle = (status?: string) => {
             };
 
 
-        /*
-         * RED
-         * Rejected / Correction
-         */
+        /* RED */
 
         case "REJECTED":
         case "NEEDS_CORRECTION":
@@ -147,10 +143,7 @@ const getStatusStyle = (status?: string) => {
             };
 
 
-        /*
-         * BLUE
-         * In Progress
-         */
+        /* BLUE */
 
         case "IN_PROGRESS":
 
@@ -172,10 +165,7 @@ const getStatusStyle = (status?: string) => {
             };
 
 
-        /*
-         * INDIGO
-         * Assigned
-         */
+        /* INDIGO */
 
         case "ASSIGNED":
 
@@ -197,10 +187,7 @@ const getStatusStyle = (status?: string) => {
             };
 
 
-        /*
-         * GRAY
-         * Draft / Default
-         */
+        /* GRAY */
 
         case "DRAFT":
         default:
@@ -225,11 +212,9 @@ const getStatusStyle = (status?: string) => {
 };
 
 
-/*
- * ==========================================
+/* =========================================================
  * STATUS LABEL
- * ==========================================
- */
+ * ========================================================= */
 
 const getStatusLabel = (status?: string) => {
 
@@ -241,22 +226,18 @@ const getStatusLabel = (status?: string) => {
 };
 
 
-/*
- * ==========================================
+/* =========================================================
  * COMPONENT
- * ==========================================
- */
+ * ========================================================= */
 
 export function VendorAssessmentsPage() {
 
     const navigate = useNavigate();
 
 
-    /*
-     * ======================================
+    /* =====================================================
      * STATE
-     * ======================================
-     */
+     * ===================================================== */
 
     const [search, setSearch] =
         useState("");
@@ -274,11 +255,19 @@ export function VendorAssessmentsPage() {
         useState(false);
 
 
-    /*
-     * ======================================
+    /* =====================================================
+     * PAGINATION
+     * ===================================================== */
+
+    const [currentPage, setCurrentPage] =
+        useState(1);
+
+    const itemsPerPage = 10;
+
+
+    /* =====================================================
      * LOAD ASSESSMENTS
-     * ======================================
-     */
+     * ===================================================== */
 
     const loadAssessments = async (
         showRefresh = false
@@ -300,6 +289,10 @@ export function VendorAssessmentsPage() {
             const data =
                 await vendorApi.getVendorAssessments();
 
+
+            /*
+             * Make sure only an array is stored.
+             */
 
             setAssessments(
                 Array.isArray(data)
@@ -332,11 +325,9 @@ export function VendorAssessmentsPage() {
     };
 
 
-    /*
-     * ======================================
+    /* =====================================================
      * INITIAL LOAD
-     * ======================================
-     */
+     * ===================================================== */
 
     useEffect(() => {
 
@@ -345,11 +336,30 @@ export function VendorAssessmentsPage() {
     }, []);
 
 
-    /*
-     * ======================================
-     * FILTER
-     * ======================================
-     */
+    /* =====================================================
+     * RESET PAGE WHEN SEARCH OR TAB CHANGES
+     * ===================================================== */
+
+    useEffect(() => {
+
+        setCurrentPage(1);
+
+    }, [
+        search,
+        tab,
+    ]);
+
+
+    /* =====================================================
+     * FILTER + SORT
+     *
+     * IMPORTANT:
+     *
+     * NEWEST ASSESSMENT FIRST
+     *
+     * 1. createdAt DESC
+     * 2. id DESC if createdAt is missing
+     * ===================================================== */
 
     const filteredAssessments =
         useMemo(() => {
@@ -360,93 +370,169 @@ export function VendorAssessmentsPage() {
                     .toLowerCase();
 
 
-            return assessments.filter(
-                (assessment) => {
+            /* =================================================
+             * FILTER
+             * ================================================= */
+
+            const filtered =
+                assessments.filter(
+                    (assessment) => {
+
+                        /* =====================================
+                         * SEARCH TEXT
+                         * ===================================== */
+
+                        const searchableText = [
+
+                            assessment.code,
+
+                            assessment.entityName,
+
+                            assessment.templateName,
+
+                            assessment.reviewerName,
+
+                            assessment.status,
+
+                            assessment.riskLevel,
+
+                        ]
+                            .filter(Boolean)
+                            .join(" ")
+                            .toLowerCase();
 
 
-                    /*
-                     * SEARCH
-                     */
-
-                    const searchableText = [
-
-                        assessment.code,
-
-                        assessment.entityName,
-
-                        assessment.templateName,
-
-                        assessment.reviewerName,
-
-                        assessment.status,
-
-                        assessment.riskLevel,
-
-                    ]
-                        .filter(Boolean)
-                        .join(" ")
-                        .toLowerCase();
+                        const searchMatch =
+                            !searchValue ||
+                            searchableText.includes(
+                                searchValue
+                            );
 
 
-                    const searchMatch =
-                        !searchValue ||
-                        searchableText.includes(
-                            searchValue
+                        /* =====================================
+                         * STATUS FILTER
+                         * ===================================== */
+
+                        let statusMatch = true;
+
+
+                        /* =====================================
+                         * DRAFTS
+                         * ===================================== */
+
+                        if (tab === "drafts") {
+
+                            statusMatch =
+                                assessment.status ===
+                                "DRAFT" ||
+
+                                assessment.status ===
+                                "ASSIGNED";
+                        }
+
+
+                        /* =====================================
+                         * SUBMITTED / UNDER REVIEW
+                         * ===================================== */
+
+                        if (tab === "submitted") {
+
+                            statusMatch =
+                                assessment.status ===
+                                "SUBMITTED" ||
+
+                                assessment.status ===
+                                "UNDER_REVIEW";
+                        }
+
+
+                        /* =====================================
+                         * CORRECTIONS
+                         * ===================================== */
+
+                        if (tab === "corrections") {
+
+                            statusMatch =
+                                assessment.status ===
+                                "NEEDS_CORRECTION" ||
+
+                                assessment.status ===
+                                "CORRECTION_REQUIRED" ||
+
+                                assessment.status ===
+                                "CORRECTION" ||
+
+                                assessment.status ===
+                                "REJECTED";
+                        }
+
+
+                        return (
+                            searchMatch &&
+                            statusMatch
                         );
 
+                    }
+                );
+
+
+            /* =================================================
+             * SORT NEWEST FIRST
+             * ================================================= */
+
+            return [...filtered].sort(
+                (a, b) => {
 
                     /*
-                     * STATUS FILTER
+                     * Convert createdAt to timestamp.
+                     *
+                     * Invalid/missing dates become 0.
                      */
 
-                    let statusMatch = true;
+                    const dateA =
+                        a.createdAt
+                            ? new Date(
+                                a.createdAt
+                            ).getTime()
+                            : 0;
 
 
-                    if (tab === "drafts") {
-
-                        statusMatch =
-                            assessment.status ===
-                            "DRAFT" ||
-
-                            assessment.status ===
-                            "ASSIGNED";
-
-                    }
+                    const dateB =
+                        b.createdAt
+                            ? new Date(
+                                b.createdAt
+                            ).getTime()
+                            : 0;
 
 
-                    if (tab === "submitted") {
+                    /*
+                     * If both records have valid
+                     * creation dates:
+                     *
+                     * newest -> oldest
+                     */
 
-                        statusMatch =
-                            assessment.status ===
-                            "SUBMITTED" ||
+                    if (
+                        dateA > 0 &&
+                        dateB > 0
+                    ) {
 
-                            assessment.status ===
-                            "UNDER_REVIEW";
-
-                    }
-
-
-                    if (tab === "corrections") {
-
-                        statusMatch =
-                            assessment.status ===
-                            "NEEDS_CORRECTION" ||
-
-                            assessment.status ===
-                            "CORRECTION_REQUIRED" ||
-
-                            assessment.status ===
-                            "CORRECTION" ||
-
-                            assessment.status ===
-                            "REJECTED";
+                        return dateB - dateA;
 
                     }
 
+
+                    /*
+                     * If createdAt is missing
+                     * for one or both records,
+                     * use ID as fallback.
+                     *
+                     * Higher ID = newer record.
+                     */
 
                     return (
-                        searchMatch &&
-                        statusMatch
+                        Number(b.id || 0) -
+                        Number(a.id || 0)
                     );
 
                 }
@@ -459,11 +545,9 @@ export function VendorAssessmentsPage() {
         ]);
 
 
-    /*
-     * ======================================
+    /* =====================================================
      * COUNTS
-     * ======================================
-     */
+     * ===================================================== */
 
     const totalCount =
         assessments.length;
@@ -474,6 +558,7 @@ export function VendorAssessmentsPage() {
             (assessment) =>
                 assessment.status ===
                 "IN_PROGRESS" ||
+
                 assessment.status ===
                 "ASSIGNED"
         ).length;
@@ -484,6 +569,7 @@ export function VendorAssessmentsPage() {
             (assessment) =>
                 assessment.status ===
                 "SUBMITTED" ||
+
                 assessment.status ===
                 "UNDER_REVIEW"
         ).length;
@@ -494,20 +580,105 @@ export function VendorAssessmentsPage() {
             (assessment) =>
                 assessment.status ===
                 "NEEDS_CORRECTION" ||
+
                 assessment.status ===
                 "CORRECTION_REQUIRED" ||
+
                 assessment.status ===
                 "CORRECTION" ||
+
                 assessment.status ===
                 "REJECTED"
         ).length;
 
 
-    /*
-     * ======================================
+    /* =====================================================
+     * PAGINATION
+     * ===================================================== */
+
+    const totalPages =
+        Math.ceil(
+            filteredAssessments.length /
+            itemsPerPage
+        );
+
+
+    /* =====================================================
+     * KEEP CURRENT PAGE VALID
+     * ===================================================== */
+
+    useEffect(() => {
+
+        if (
+            totalPages > 0 &&
+            currentPage > totalPages
+        ) {
+
+            setCurrentPage(totalPages);
+
+        }
+
+    }, [
+        currentPage,
+        totalPages,
+    ]);
+
+
+    /* =====================================================
+     * CURRENT PAGE DATA
+     *
+     * IMPORTANT:
+     *
+     * Sorting is already completed above.
+     *
+     * Only after sorting do we slice
+     * the records for pagination.
+     *
+     * Therefore newest records are
+     * guaranteed to be on page 1.
+     * ===================================================== */
+
+    const paginatedAssessments =
+        useMemo(() => {
+
+            const startIndex =
+                (currentPage - 1) *
+                itemsPerPage;
+
+
+            const endIndex =
+                startIndex +
+                itemsPerPage;
+
+
+            return filteredAssessments.slice(
+                startIndex,
+                endIndex
+            );
+
+        }, [
+            filteredAssessments,
+            currentPage,
+        ]);
+
+
+    /* =====================================================
+     * PAGINATION NUMBERS
+     * ===================================================== */
+
+    const pageNumbers =
+        Array.from(
+            {
+                length: totalPages,
+            },
+            (_, index) =>
+                index + 1
+        );
+
+
+    /* =====================================================
      * OPEN ASSESSMENT
-     * ======================================
-     */
+     * ===================================================== */
 
     const openAssessment = (
         assessment: VendorAssessment
@@ -520,11 +691,9 @@ export function VendorAssessmentsPage() {
     };
 
 
-    /*
-     * ======================================
+    /* =====================================================
      * LOADING
-     * ======================================
-     */
+     * ===================================================== */
 
     if (loading) {
 
@@ -603,20 +772,18 @@ export function VendorAssessmentsPage() {
     }
 
 
-    /*
-     * ======================================
+    /* =====================================================
      * PAGE
-     * ======================================
-     */
+     * ===================================================== */
 
     return (
 
         <div className="space-y-6">
 
 
-            {/* ================================= */}
-            {/* HEADER */}
-            {/* ================================= */}
+            {/* =================================================
+             * HEADER
+             * ================================================= */}
 
             <PageHeader
 
@@ -663,9 +830,9 @@ export function VendorAssessmentsPage() {
             />
 
 
-            {/* ================================= */}
-            {/* SUMMARY CARDS */}
-            {/* ================================= */}
+            {/* =================================================
+             * SUMMARY CARDS
+             * ================================================= */}
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -793,13 +960,12 @@ export function VendorAssessmentsPage() {
 
                 </Card>
 
-
             </div>
 
 
-            {/* ================================= */}
-            {/* FILTERS */}
-            {/* ================================= */}
+            {/* =================================================
+             * FILTERS
+             * ================================================= */}
 
             <Card className="p-4">
 
@@ -870,15 +1036,14 @@ export function VendorAssessmentsPage() {
 
                     </div>
 
-
                 </div>
 
             </Card>
 
 
-            {/* ================================= */}
-            {/* EMPTY */}
-            {/* ================================= */}
+            {/* =================================================
+             * EMPTY
+             * ================================================= */}
 
             {filteredAssessments.length === 0 && (
 
@@ -901,9 +1066,9 @@ export function VendorAssessmentsPage() {
             )}
 
 
-            {/* ================================= */}
-            {/* TABLE */}
-            {/* ================================= */}
+            {/* =================================================
+             * TABLE
+             * ================================================= */}
 
             {filteredAssessments.length > 0 && (
 
@@ -928,7 +1093,11 @@ export function VendorAssessmentsPage() {
                                     {filteredAssessments.length !== 1
                                         ? "s"
                                         : ""
-                                    } found
+                                    }
+
+                                    {" • "}
+
+                                    Newest first
 
                                 </p>
 
@@ -982,7 +1151,7 @@ export function VendorAssessmentsPage() {
 
                             <TableBody>
 
-                                {filteredAssessments.map(
+                                {paginatedAssessments.map(
                                     (assessment) => {
 
                                         const progress =
@@ -1029,9 +1198,9 @@ export function VendorAssessmentsPage() {
                                             >
 
 
-                                                {/* ===================== */}
-                                                {/* ASSESSMENT */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * ASSESSMENT
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1050,7 +1219,9 @@ export function VendorAssessmentsPage() {
                                                             `}
                                                         >
 
-                                                            <ClipboardCheck className="h-5 w-5" />
+                                                            <ClipboardCheck
+                                                                className="h-5 w-5"
+                                                            />
 
                                                         </div>
 
@@ -1079,9 +1250,9 @@ export function VendorAssessmentsPage() {
                                                 </TableCell>
 
 
-                                                {/* ===================== */}
-                                                {/* ENTITY */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * ENTITY
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1110,9 +1281,9 @@ export function VendorAssessmentsPage() {
                                                 </TableCell>
 
 
-                                                {/* ===================== */}
-                                                {/* TEMPLATE */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * TEMPLATE
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1141,9 +1312,9 @@ export function VendorAssessmentsPage() {
                                                 </TableCell>
 
 
-                                                {/* ===================== */}
-                                                {/* PROGRESS */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * PROGRESS
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1195,9 +1366,9 @@ export function VendorAssessmentsPage() {
                                                 </TableCell>
 
 
-                                                {/* ===================== */}
-                                                {/* STATUS */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * STATUS
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1237,9 +1408,9 @@ export function VendorAssessmentsPage() {
                                                 </TableCell>
 
 
-                                                {/* ===================== */}
-                                                {/* DUE DATE */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * DUE DATE
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1254,17 +1425,7 @@ export function VendorAssessmentsPage() {
                                                             "
                                                         />
 
-                                                        <span
-                                                            className={`
-                                                                whitespace-nowrap
-                                                                text-sm
-                                                                ${
-                                                                assessment.dueDate
-                                                                    ? "text-muted-foreground"
-                                                                    : "text-muted-foreground"
-                                                            }
-                                                            `}
-                                                        >
+                                                        <span className="whitespace-nowrap text-sm text-muted-foreground">
 
                                                             {
                                                                 assessment.dueDate
@@ -1281,9 +1442,9 @@ export function VendorAssessmentsPage() {
                                                 </TableCell>
 
 
-                                                {/* ===================== */}
-                                                {/* ACTION */}
-                                                {/* ===================== */}
+                                                {/* =====================
+                                                 * ACTION
+                                                 * ===================== */}
 
                                                 <TableCell>
 
@@ -1295,7 +1456,9 @@ export function VendorAssessmentsPage() {
 
                                                         className="transition-transform hover:translate-x-1"
 
-                                                        onClick={(event) => {
+                                                        onClick={(
+                                                            event
+                                                        ) => {
 
                                                             event.stopPropagation();
 
@@ -1315,7 +1478,6 @@ export function VendorAssessmentsPage() {
 
                                                 </TableCell>
 
-
                                             </TableRow>
 
                                         );
@@ -1328,6 +1490,165 @@ export function VendorAssessmentsPage() {
                         </Table>
 
                     </div>
+
+
+                    {/* =================================================
+                     * PAGINATION
+                     * ================================================= */}
+
+                    {totalPages > 1 && (
+
+                        <div className="flex flex-col gap-3 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+
+
+                            {/* RESULTS INFO */}
+
+                            <p className="text-sm text-muted-foreground">
+
+                                Showing{" "}
+
+                                <span className="font-medium text-foreground">
+
+                                    {
+                                        (currentPage - 1) *
+                                        itemsPerPage +
+                                        1
+                                    }
+
+                                </span>
+
+                                {" - "}
+
+                                <span className="font-medium text-foreground">
+
+                                    {
+                                        Math.min(
+                                            currentPage *
+                                            itemsPerPage,
+                                            filteredAssessments.length
+                                        )
+                                    }
+
+                                </span>
+
+                                {" of "}
+
+                                <span className="font-medium text-foreground">
+
+                                    {
+                                        filteredAssessments.length
+                                    }
+
+                                </span>
+
+                            </p>
+
+
+                            {/* PAGINATION CONTROLS */}
+
+                            <div className="flex items-center gap-1">
+
+
+                                {/* PREVIOUS */}
+
+                                <Button
+
+                                    variant="outline"
+
+                                    size="icon"
+
+                                    disabled={
+                                        currentPage === 1
+                                    }
+
+                                    onClick={() =>
+                                        setCurrentPage(
+                                            (page) =>
+                                                Math.max(
+                                                    page - 1,
+                                                    1
+                                                )
+                                        )
+                                    }
+
+                                >
+
+                                    <ChevronLeft
+                                        className="h-4 w-4"
+                                    />
+
+                                </Button>
+
+
+                                {/* PAGE NUMBERS */}
+
+                                {pageNumbers.map(
+                                    (page) => (
+
+                                        <Button
+
+                                            key={page}
+
+                                            variant={
+                                                currentPage === page
+                                                    ? "default"
+                                                    : "outline"
+                                            }
+
+                                            size="icon"
+
+                                            onClick={() =>
+                                                setCurrentPage(
+                                                    page
+                                                )
+                                            }
+
+                                        >
+
+                                            {page}
+
+                                        </Button>
+
+                                    )
+                                )}
+
+
+                                {/* NEXT */}
+
+                                <Button
+
+                                    variant="outline"
+
+                                    size="icon"
+
+                                    disabled={
+                                        currentPage ===
+                                        totalPages
+                                    }
+
+                                    onClick={() =>
+                                        setCurrentPage(
+                                            (page) =>
+                                                Math.min(
+                                                    page + 1,
+                                                    totalPages
+                                                )
+                                        )
+                                    }
+
+                                >
+
+                                    <ChevronRight
+                                        className="h-4 w-4"
+                                    />
+
+                                </Button>
+
+                            </div>
+
+                        </div>
+
+                    )}
 
                 </Card>
 

@@ -1,15 +1,19 @@
 package com.tspmquestionmaster.controller;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.RequestParam;
+import com.tspmquestionmaster.service.TopicImportService;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import com.tspmquestionmaster.dto.request.CreateTopicRequest;
-import com.tspmquestionmaster.dto.request.TopicFilterRequest;
-import com.tspmquestionmaster.dto.request.TopicSearchRequest;
 import com.tspmquestionmaster.dto.request.UpdateTopicRequest;
-import com.tspmquestionmaster.dto.response.ApiResponse;
 import com.tspmquestionmaster.dto.response.TopicResponse;
+import com.tspmquestionmaster.service.ExcelTemplateService;
 import com.tspmquestionmaster.service.TopicService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,117 +21,125 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/topics")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class TopicController {
 
     private final TopicService topicService;
 
+    private final ExcelTemplateService excelTemplateService;
+    private final TopicImportService topicImportService;
+
+    // =========================================================
+    // CREATE TOPIC
+    // =========================================================
+
     @PostMapping
-    public ApiResponse<TopicResponse> createTopic(
-            @Valid @RequestBody CreateTopicRequest request) {
+    public ResponseEntity<TopicResponse> createTopic(
+            @Valid @RequestBody CreateTopicRequest request
+    ) {
 
-        TopicResponse response = topicService.createTopic(request);
-
-        return new ApiResponse<>(
-                true,
-                "Topic created successfully",
-                response
+        return ResponseEntity.ok(
+                topicService.createTopic(request)
         );
     }
 
-    @PutMapping("/{id}")
-    public ApiResponse<TopicResponse> updateTopic(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateTopicRequest request) {
 
-        TopicResponse response = topicService.updateTopic(id, request);
+    // =========================================================
+    // GET ALL TOPICS
+    // =========================================================
 
-        return new ApiResponse<>(
-                true,
-                "Topic updated successfully",
-                response
-        );
-    }
-
-    @GetMapping("/{id}")
-    public ApiResponse<TopicResponse> getTopicById(
-            @PathVariable Long id) {
-
-        TopicResponse response = topicService.getTopicById(id);
-
-        return new ApiResponse<>(
-                true,
-                "Topic fetched successfully",
-                response
-        );
-    }
-    @GetMapping("/page")
-    public ApiResponse<Page<TopicResponse>> getTopics(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String direction) {
-
-        Page<TopicResponse> response =
-                topicService.getTopics(page, size, sortBy, direction);
-
-        return new ApiResponse<>(
-                true,
-                "Topics fetched successfully",
-                response
-        );
-    }
     @GetMapping
-    public ApiResponse<List<TopicResponse>> getAllTopics() {
+    public ResponseEntity<List<TopicResponse>> getAllTopics() {
 
-        List<TopicResponse> response = topicService.getAllTopics();
-
-        return new ApiResponse<>(
-                true,
-                "Topics fetched successfully",
-                response
+        return ResponseEntity.ok(
+                topicService.getAllTopics()
         );
     }
 
-    @PostMapping("/search")
-    public ApiResponse<List<TopicResponse>> searchTopics(
-            @RequestBody TopicSearchRequest request) {
 
-        System.out.println("SEARCH API HIT");
+    // =========================================================
+    // DOWNLOAD TOPIC IMPORT TEMPLATE
+    // GET /api/topics/import-template
+    // =========================================================
 
-        List<TopicResponse> response = topicService.searchTopics(request);
+    @GetMapping("/import-template")
+    public ResponseEntity<byte[]> downloadImportTemplate() {
 
-        return new ApiResponse<>(
-                true,
-                "Search completed",
-                response
+        byte[] file =
+                excelTemplateService.generateTopicImportTemplate();
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=Topic_Import_Template.xlsx"
+                )
+                .contentType(
+                        MediaType.parseMediaType(
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                )
+                .body(file);
+    }
+
+
+    // =========================================================
+    // GET TOPIC BY ID
+    // =========================================================
+
+    @GetMapping("/{id:\\d+}")
+    public ResponseEntity<TopicResponse> getTopicById(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                topicService.getTopicById(id)
         );
     }
 
-    @PostMapping("/filter")
-    public ApiResponse<List<TopicResponse>> filterTopics(
-            @RequestBody TopicFilterRequest request) {
 
-        List<TopicResponse> response = topicService.filterTopics(request);
+    // =========================================================
+    // UPDATE TOPIC
+    // =========================================================
 
-        return new ApiResponse<>(
-                true,
-                "Filter completed",
-                response
+    @PutMapping("/{id:\\d+}")
+    public ResponseEntity<TopicResponse> updateTopic(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateTopicRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                topicService.updateTopic(id, request)
         );
     }
 
-    @DeleteMapping("/{id}")
-    public ApiResponse<String> deleteTopic(
-            @PathVariable Long id) {
+
+    // =========================================================
+    // DELETE TOPIC
+    // =========================================================
+
+    @DeleteMapping("/{id:\\d+}")
+    public ResponseEntity<Void> deleteTopic(
+            @PathVariable Long id
+    ) {
 
         topicService.deleteTopic(id);
 
-        return new ApiResponse<>(
-                true,
-                "Topic deleted successfully",
-                null
+        return ResponseEntity.noContent().build();
+    }
+    @PostMapping(
+            value = "/import",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<String> importTopics(
+            @RequestParam("file") MultipartFile file
+    ) {
+
+        int importedCount =
+                topicImportService.importTopics(file);
+
+        return ResponseEntity.ok(
+                importedCount +
+                        " topics imported successfully"
         );
     }
-
 }

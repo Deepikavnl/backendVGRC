@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+
 import {
     Table,
     TableHeader,
@@ -27,10 +28,15 @@ import {
     TableHead,
     TableCell,
 } from "@/components/ui/table";
+
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/common/status-badge";
-import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownItem,
+} from "@/components/ui/dropdown-menu";
+
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { Drawer } from "@/components/ui/drawer";
 
@@ -39,11 +45,18 @@ import { toast } from "@/store/toast";
 import { formatDate } from "@/lib/utils";
 
 import { topics } from "@/data/mock";
+
 import {
     getQuestions,
     importQuestions,
     downloadQuestionTemplate,
 } from "./api";
+
+
+// ============================================================
+// QUESTION TYPE LABELS
+// ============================================================
+
 const typeLabels: Record<string, string> = {
     TEXT: "Short Text",
     PARAGRAPH: "Paragraph",
@@ -53,264 +66,610 @@ const typeLabels: Record<string, string> = {
     NUMBER: "Number",
     DATE: "Date",
     FILE: "File Upload",
-
 };
+
+
+// ============================================================
+// PAGE SIZE
+// ============================================================
+
 const PAGE_SIZE = 12;
 
+
+// ============================================================
+// QUESTION TYPES
+// ============================================================
+
+const questionTypeOptions = [
+    {
+        label: "All Types",
+        value: "",
+    },
+    {
+        label: "Short Text",
+        value: "TEXT",
+    },
+    {
+        label: "Paragraph",
+        value: "PARAGRAPH",
+    },
+    {
+        label: "Yes / No",
+        value: "YESNO",
+    },
+    {
+        label: "Dropdown",
+        value: "DROPDOWN",
+    },
+    {
+        label: "Checkbox",
+        value: "CHECKBOX",
+    },
+    {
+        label: "Number",
+        value: "NUMBER",
+    },
+    {
+        label: "Date",
+        value: "DATE",
+    },
+    {
+        label: "File Upload",
+        value: "FILE",
+    },
+];
+
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
 export function QuestionBankPage() {
+
     const navigate = useNavigate();
 
-    const [allQuestions, setAllQuestions] = useState<any[]>([]);
-    const [questionFile, setQuestionFile] = useState<File | null>(null);
-    const [search, setSearch] = useState("");
-    const [topic, setTopic] = useState("");
-    const [type, setType] = useState("");
-    const [status, setStatus] = useState("");
-    const [page, setPage] = useState(1);
 
-    const [selected, setSelected] = useState<Set<number>>(new Set());
+    // ========================================================
+    // STATE
+    // ========================================================
 
-    const [preview, setPreview] = useState<any>(null);
+    const [allQuestions, setAllQuestions] =
+        useState<any[]>([]);
 
-    const [confirmArchive, setConfirmArchive] = useState(false);
+    const [questionFile, setQuestionFile] =
+        useState<File | null>(null);
+
+    const [search, setSearch] =
+        useState("");
+
+    const [topic, setTopic] =
+        useState("");
+
+    const [type, setType] =
+        useState("");
+
+    const [status, setStatus] =
+        useState("");
+
+    const [page, setPage] =
+        useState(1);
+
+    const [selected, setSelected] =
+        useState<Set<number>>(new Set());
+
+    const [preview, setPreview] =
+        useState<any>(null);
+
+    const [confirmArchive, setConfirmArchive] =
+        useState(false);
+
+
+    // ========================================================
+    // LOAD QUESTIONS
+    // ========================================================
 
     useEffect(() => {
         loadQuestions();
     }, []);
+
+
     const loadQuestions = async () => {
+
         try {
-            const res = await getQuestions();
 
-            console.log("Backend Response:", res.data);
-            console.log("Is Array:", Array.isArray(res.data));
+            const response =
+                await getQuestions();
 
-            setAllQuestions(res.data.data);
+            console.log(
+                "Backend Response:",
+                response.data
+            );
 
-        } catch (err) {
-            console.error(err);
+            const data =
+                response.data?.data ?? [];
+
+            setAllQuestions(
+                Array.isArray(data)
+                    ? data
+                    : []
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load questions:",
+                error
+            );
+
+            toast.error(
+                "Failed to load questions"
+            );
         }
     };
+
+
+    // ========================================================
+    // FILTER QUESTIONS
+    // ========================================================
+
     const filtered = useMemo(() => {
+
         if (!Array.isArray(allQuestions)) {
             return [];
         }
 
-        return allQuestions.filter((q: any) => {
-            const matchesSearch =
-                !search ||
-                q.questionText?.toLowerCase().includes(search.toLowerCase()) ||
-                q.code?.toLowerCase().includes(search.toLowerCase());
+        return allQuestions.filter(
+            (q: any) => {
 
-            const matchesTopic =
-                !topic || String(q.topicId) === topic;
+                const matchesSearch =
+                    !search ||
+                    q.questionText
+                        ?.toLowerCase()
+                        .includes(
+                            search.toLowerCase()
+                        ) ||
+                    q.code
+                        ?.toLowerCase()
+                        .includes(
+                            search.toLowerCase()
+                        );
 
-            const matchesType =
-                !type || q.questionType === type;
 
-            const matchesStatus =
-                !status || q.status === status;
+                const matchesTopic =
+                    !topic ||
+                    String(
+                        q.topicId ??
+                        q.topic?.id ??
+                        ""
+                    ) === topic;
 
-            return (
-                matchesSearch &&
-                matchesTopic &&
-                matchesType &&
-                matchesStatus
-            );
-        });
-    }, [allQuestions, search, topic, type, status]);
 
-    const pageData = filtered.slice(
-        (page - 1) * PAGE_SIZE,
-        page * PAGE_SIZE
-    );
+                const matchesType =
+                    !type ||
+                    q.questionType === type;
+
+
+                const matchesStatus =
+                    !status ||
+                    q.status === status;
+
+
+                return (
+                    matchesSearch &&
+                    matchesTopic &&
+                    matchesType &&
+                    matchesStatus
+                );
+            }
+        );
+
+    }, [
+        allQuestions,
+        search,
+        topic,
+        type,
+        status,
+    ]);
+
+
+    // ========================================================
+    // PAGINATION
+    // ========================================================
+
+    const pageData =
+        filtered.slice(
+            (page - 1) * PAGE_SIZE,
+            page * PAGE_SIZE
+        );
+
+
+    // ========================================================
+    // SELECT ALL
+    // ========================================================
 
     const allSelected =
         pageData.length > 0 &&
-        pageData.every((q: any) => selected.has(q.id));
+        pageData.every(
+            (q: any) =>
+                selected.has(q.id)
+        );
+
 
     const toggleAll = () => {
-        const next = new Set(selected);
+
+        const next =
+            new Set(selected);
+
 
         if (allSelected) {
-            pageData.forEach((q: any) => next.delete(q.id));
+
+            pageData.forEach(
+                (q: any) =>
+                    next.delete(q.id)
+            );
+
         } else {
-            pageData.forEach((q: any) => next.add(q.id));
+
+            pageData.forEach(
+                (q: any) =>
+                    next.add(q.id)
+            );
         }
+
 
         setSelected(next);
     };
 
+
+    // ========================================================
+    // SELECT SINGLE
+    // ========================================================
+
     const toggle = (id: number) => {
-        const next = new Set(selected);
+
+        const next =
+            new Set(selected);
+
 
         if (next.has(id)) {
+
             next.delete(id);
+
         } else {
+
             next.add(id);
         }
 
+
         setSelected(next);
     };
-    const handleDownloadQuestionTemplate = async () => {
-        try {
 
-            const response = await downloadQuestionTemplate();
 
-            const url = window.URL.createObjectURL(response.data);
+    // ========================================================
+    // DOWNLOAD EXCEL TEMPLATE
+    // ========================================================
 
-            const link = document.createElement("a");
+    const handleDownloadQuestionTemplate =
+        async () => {
 
-            link.href = url;
-            link.download = "Question_Import_Template.xlsx";
+            try {
 
-            document.body.appendChild(link);
+                /*
+                 * Backend expects questionType.
+                 *
+                 * If no type is selected,
+                 * send ALL.
+                 *
+                 * If a type is selected,
+                 * send that type.
+                 */
 
-            link.click();
+                const selectedQuestionType =
+                    type || "ALL";
 
-            document.body.removeChild(link);
 
-            window.URL.revokeObjectURL(url);
+                const response =
+                    await downloadQuestionTemplate(
+                        selectedQuestionType
+                    );
 
-            toast.success("Template downloaded");
 
-        } catch (error) {
+                const blob =
+                    new Blob(
+                        [response.data],
+                        {
+                            type:
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        }
+                    );
 
-            console.error(error);
 
-            toast.error("Failed to download template");
-        }
-    };
-    const handleQuestionImport = async () => {
+                const url =
+                    window.URL.createObjectURL(
+                        blob
+                    );
 
-        if (!questionFile) {
-            toast.error("Please select an Excel file");
-            return;
-        }
 
-        try {
+                const link =
+                    document.createElement("a");
 
-            await importQuestions(questionFile);
 
-            toast.success("Questions imported successfully");
+                link.href = url;
 
-            setQuestionFile(null);
+                link.download =
+                    "Question_Import_Template.xlsx";
 
-            loadQuestions();
 
-        } catch (error) {
+                document.body.appendChild(
+                    link
+                );
 
-            console.error(error);
 
-            toast.error("Question import failed");
+                link.click();
 
-        }
 
-    };
+                document.body.removeChild(
+                    link
+                );
+
+
+                window.URL.revokeObjectURL(
+                    url
+                );
+
+
+                toast.success(
+                    "Question Excel template downloaded"
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Template download error:",
+                    error
+                );
+
+                toast.error(
+                    "Failed to download question template"
+                );
+            }
+        };
+
+
+    // ========================================================
+    // QUESTION IMPORT
+    // ========================================================
+
+    const handleQuestionImport =
+        async () => {
+
+            if (!questionFile) {
+
+                toast.error(
+                    "Please select an Excel file"
+                );
+
+                return;
+            }
+
+
+            try {
+
+                await importQuestions(
+                    questionFile
+                );
+
+
+                toast.success(
+                    "Questions imported successfully"
+                );
+
+
+                setQuestionFile(
+                    null
+                );
+
+
+                const input =
+                    document.getElementById(
+                        "question-upload"
+                    ) as HTMLInputElement | null;
+
+
+                if (input) {
+                    input.value = "";
+                }
+
+
+                await loadQuestions();
+
+            } catch (error) {
+
+                console.error(
+                    "Question import error:",
+                    error
+                );
+
+                toast.error(
+                    "Question import failed"
+                );
+            }
+        };
+
+
+    // ========================================================
+    // RENDER
+    // ========================================================
 
     return (
         <>
+            {/* ================================================= */}
+            {/* PAGE HEADER */}
+            {/* ================================================= */}
+
             <PageHeader
                 title="Question Master"
                 description="Central repository of all assessment questions."
                 breadcrumbs={[
-                    { label: "Question Master" },
-                    { label: "Question Bank" },
+                    {
+                        label: "Question Master",
+                    },
+                    {
+                        label: "Question Bank",
+                    },
                 ]}
                 actions={
+
                     <>
-                        {/* Excel File Select */}
-
-
-
+                        {/* ===================================== */}
+                        {/* HIDDEN FILE INPUT */}
+                        {/* ===================================== */}
 
                         <input
                             id="question-upload"
                             type="file"
                             accept=".xlsx,.xls"
                             className="hidden"
-                            onChange={(e) => {
+                            onChange={(event) => {
 
-                                const file = e.target.files?.[0];
+                                const file =
+                                    event.target.files?.[0];
+
 
                                 if (file) {
-                                    setQuestionFile(file);
-                                    toast.success(`${file.name} selected`);
-                                }
 
+                                    setQuestionFile(
+                                        file
+                                    );
+
+
+                                    toast.success(
+                                        `${file.name} selected`
+                                    );
+                                }
                             }}
                         />
+
+
+                        {/* ===================================== */}
+                        {/* DOWNLOAD TEMPLATE */}
+                        {/* ===================================== */}
+
                         <Button
                             variant="outline"
-                            onClick={handleDownloadQuestionTemplate}
+                            onClick={
+                                handleDownloadQuestionTemplate
+                            }
                         >
-                            <Download className="h-4 w-4 mr-2" />
+
+                            <Download
+                                className="h-4 w-4 mr-2"
+                            />
+
                             Download Template
+
                         </Button>
+
+
+                        {/* ===================================== */}
+                        {/* CHOOSE EXCEL */}
+                        {/* ===================================== */}
+
                         <Button
                             variant="outline"
                             type="button"
                             onClick={() =>
-                                document.getElementById("question-upload")?.click()
+                                document
+                                    .getElementById(
+                                        "question-upload"
+                                    )
+                                    ?.click()
                             }
                         >
-                            <Download className="h-4 w-4 mr-2" />
+
+                            <Download
+                                className="h-4 w-4 mr-2"
+                            />
+
                             Choose Excel
+
                         </Button>
+
+
+                        {/* ===================================== */}
+                        {/* IMPORT QUESTIONS */}
+                        {/* ===================================== */}
+
                         <Button
                             variant="outline"
-                            onClick={handleQuestionImport}
+                            onClick={
+                                handleQuestionImport
+                            }
                         >
+
                             Import Questions
+
                         </Button>
 
 
-
-                        {/* Import Button */}
-
-
-
-
-
-
-
-
-
-                        {/* Export Button */}
+                        {/* ===================================== */}
+                        {/* EXPORT CSV */}
+                        {/* ===================================== */}
 
                         <Button
                             variant="outline"
                             onClick={() =>
                                 exportToCSV(
                                     "questions",
-                                    filtered.map((q:any)=>({
-                                        Code:q.code,
-                                        Question:q.questionText,
-                                        Type:q.questionType,
-                                        Weight:q.weight,
-                                        Mandatory:q.mandatory,
-                                        Status:q.status,
-                                    }))
+                                    filtered.map(
+                                        (q: any) => ({
+                                            Code:
+                                            q.code,
+
+                                            Question:
+                                            q.questionText,
+
+                                            Type:
+                                            q.questionType,
+
+                                            Weight:
+                                            q.weight,
+
+                                            Mandatory:
+                                            q.mandatory,
+
+                                            Status:
+                                            q.status,
+                                        })
+                                    )
                                 )
                             }
                         >
 
-                            <Download className="h-4 w-4 mr-2"/>
+                            <Download
+                                className="h-4 w-4 mr-2"
+                            />
 
                             Export
 
                         </Button>
 
 
-
-                        {/* Create Question */}
+                        {/* ===================================== */}
+                        {/* NEW QUESTION */}
+                        {/* ===================================== */}
 
                         <Button
                             onClick={() =>
-                                navigate("/questions/new")
+                                navigate(
+                                    "/questions/new"
+                                )
                             }
                         >
 
-                            <Plus className="h-4 w-4 mr-2"/>
+                            <Plus
+                                className="h-4 w-4 mr-2"
+                            />
 
                             New Question
 
@@ -320,318 +679,651 @@ export function QuestionBankPage() {
                 }
             />
 
+
+            {/* ================================================= */}
+            {/* TOOLBAR */}
+            {/* ================================================= */}
+
             <Toolbar>
+
                 <SearchInput
                     value={search}
-                    onChange={(v) => {
-                        setSearch(v);
+                    onChange={(value) => {
+
+                        setSearch(value);
+
                         setPage(1);
                     }}
                     placeholder="Search Questions..."
                     className="w-full sm:max-w-xs"
                 />
 
+
                 <div className="flex flex-wrap gap-2">
+
+                    {/* ========================================= */}
+                    {/* TOPIC FILTER */}
+                    {/* ========================================= */}
+
                     <Select
                         value={topic}
-                        onValueChange={(v) => {
-                            setTopic(v);
+                        onValueChange={(value) => {
+
+                            setTopic(value);
+
                             setPage(1);
                         }}
                         placeholder="All Topics"
                         className="w-40"
                         options={[
-                            { label: "All Topics", value: "" },
-                            ...topics.map((t) => ({
-                                label: t.name,
-                                value: String(t.id),
-                            })),
+                            {
+                                label: "All Topics",
+                                value: "",
+                            },
+
+                            ...topics.map(
+                                (item) => ({
+                                    label:
+                                    item.name,
+
+                                    value:
+                                        String(
+                                            item.id
+                                        ),
+                                })
+                            ),
                         ]}
                     />
 
+
+                    {/* ========================================= */}
+                    {/* TYPE FILTER */}
+                    {/* ========================================= */}
+
                     <Select
                         value={type}
-                        onValueChange={(v) => {
-                            setType(v);
+                        onValueChange={(value) => {
+
+                            setType(value);
+
                             setPage(1);
                         }}
                         placeholder="All Types"
                         className="w-40"
-                        options={[
-                            { label: "All Types", value: "" },
-                            { label: "Short Text", value: "TEXT" },
-                            { label: "Paragraph", value: "PARAGRAPH" },
-                            { label: "Yes / No", value: "YESNO" },
-                            { label: "Dropdown", value: "DROPDOWN" },
-                            { label: "Checkbox", value: "CHECKBOX" },
-                            { label: "Number", value: "NUMBER" },
-                            { label: "Date", value: "DATE" },
-                            { label: "File Upload", value: "FILE" },
-                        ]}
+                        options={
+                            questionTypeOptions
+                        }
                     />
+
+
+                    {/* ========================================= */}
+                    {/* STATUS FILTER */}
+                    {/* ========================================= */}
 
                     <Select
                         value={status}
-                        onValueChange={(v) => {
-                            setStatus(v);
+                        onValueChange={(value) => {
+
+                            setStatus(value);
+
                             setPage(1);
                         }}
                         placeholder="Status"
                         className="w-36"
                         options={[
-                            { label: "All", value: "" },
-                            { label: "Draft", value: "DRAFT" },
-                            { label: "Published", value: "PUBLISHED" },
-                            { label: "Archived", value: "ARCHIVED" },
+                            {
+                                label: "All",
+                                value: "",
+                            },
+                            {
+                                label: "Draft",
+                                value: "DRAFT",
+                            },
+                            {
+                                label: "Published",
+                                value: "PUBLISHED",
+                            },
+                            {
+                                label: "Archived",
+                                value: "ARCHIVED",
+                            },
                         ]}
                     />
+
                 </div>
+
             </Toolbar>
 
+
+            {/* ================================================= */}
+            {/* QUESTION TABLE */}
+            {/* ================================================= */}
+
             <Card>
+
                 {filtered.length === 0 ? (
+
                     <EmptyState
                         icon={HelpCircle}
                         title="No Questions Found"
                         description="Create your first question."
                         action={
-                            <Button onClick={() => navigate("/questions/new")}>
-                                <Plus className="h-4 w-4" />
+
+                            <Button
+                                onClick={() =>
+                                    navigate(
+                                        "/questions/new"
+                                    )
+                                }
+                            >
+
+                                <Plus
+                                    className="h-4 w-4"
+                                />
+
                                 New Question
+
                             </Button>
                         }
                     />
+
                 ) : (
+
                     <>
+
                         <Table>
+
                             <TableHeader>
+
                                 <TableRow>
+
                                     <TableHead className="w-10">
+
                                         <Checkbox
-                                            checked={allSelected}
-                                            onCheckedChange={toggleAll}
+                                            checked={
+                                                allSelected
+                                            }
+                                            onCheckedChange={
+                                                toggleAll
+                                            }
                                         />
+
                                     </TableHead>
 
-                                    <TableHead>Code</TableHead>
-                                    <TableHead>Question</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Weight</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Updated</TableHead>
-                                    <TableHead></TableHead>
+
+                                    <TableHead>
+                                        Code
+                                    </TableHead>
+
+
+                                    <TableHead>
+                                        Question
+                                    </TableHead>
+
+
+                                    <TableHead>
+                                        Type
+                                    </TableHead>
+
+
+                                    <TableHead>
+                                        Weight
+                                    </TableHead>
+
+
+                                    <TableHead>
+                                        Status
+                                    </TableHead>
+
+
+                                    <TableHead>
+                                        Updated
+                                    </TableHead>
+
+
+                                    <TableHead />
+
                                 </TableRow>
+
                             </TableHeader>
 
+
                             <TableBody>
-                                {pageData.map((q: any) => (
-                                    <TableRow key={q.id}>
-                                        <TableCell>
-                                            <Checkbox
-                                                checked={selected.has(q.id)}
-                                                onCheckedChange={() => toggle(q.id)}
-                                            />
-                                        </TableCell>
 
-                                        <TableCell>{q.code}</TableCell>
+                                {pageData.map(
+                                    (q: any) => (
 
-                                        <TableCell>
-                                            <button
-                                                onClick={() => setPreview(q)}
-                                                className="font-medium hover:text-primary"
-                                            >
-                                                {q.questionText}
-                                            </button>
+                                        <TableRow
+                                            key={q.id}
+                                        >
 
-                                            {q.mandatory && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="ml-2"
+                                            {/* SELECT */}
+
+                                            <TableCell>
+
+                                                <Checkbox
+                                                    checked={
+                                                        selected.has(
+                                                            q.id
+                                                        )
+                                                    }
+                                                    onCheckedChange={() =>
+                                                        toggle(
+                                                            q.id
+                                                        )
+                                                    }
+                                                />
+
+                                            </TableCell>
+
+
+                                            {/* CODE */}
+
+                                            <TableCell>
+                                                {q.code}
+                                            </TableCell>
+
+
+                                            {/* QUESTION */}
+
+                                            <TableCell>
+
+                                                <button
+                                                    onClick={() =>
+                                                        setPreview(
+                                                            q
+                                                        )
+                                                    }
+                                                    className="font-medium hover:text-primary text-left"
                                                 >
-                                                    Required
-                                                </Badge>
-                                            )}
-                                        </TableCell>
 
-                                        <TableCell>
-                                            {typeLabels[q.questionType]}
-                                        </TableCell>
+                                                    {
+                                                        q.questionText
+                                                    }
 
-                                        <TableCell>
-                                            <Badge>{q.weight}</Badge>
-                                        </TableCell>
+                                                </button>
 
-                                        <TableCell>
-                                            <StatusBadge status={q.status} />
-                                        </TableCell>
 
-                                        <TableCell>
-                                            {formatDate(q.updatedAt)}
-                                        </TableCell>
+                                                {q.mandatory && (
 
-                                        <TableCell>
-                                            <DropdownMenu
-                                                trigger={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="ml-2"
                                                     >
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
+                                                        Required
+                                                    </Badge>
+
+                                                )}
+
+                                            </TableCell>
+
+
+                                            {/* TYPE */}
+
+                                            <TableCell>
+
+                                                {
+                                                    typeLabels[
+                                                        q.questionType
+                                                        ] ??
+                                                    q.questionType
                                                 }
-                                            >
-                                                <DropdownItem
-                                                    onClick={() => setPreview(q)}
-                                                >
-                                                    <Filter />
-                                                    Preview
-                                                </DropdownItem>
 
-                                                <DropdownItem
-                                                    onClick={() =>
-                                                        navigate(`/questions/${q.id}/edit`)
+                                            </TableCell>
+
+
+                                            {/* WEIGHT */}
+
+                                            <TableCell>
+
+                                                <Badge>
+                                                    {q.weight}
+                                                </Badge>
+
+                                            </TableCell>
+
+
+                                            {/* STATUS */}
+
+                                            <TableCell>
+
+                                                <StatusBadge
+                                                    status={
+                                                        q.status
+                                                    }
+                                                />
+
+                                            </TableCell>
+
+
+                                            {/* UPDATED */}
+
+                                            <TableCell>
+
+                                                {formatDate(
+                                                    q.updatedAt
+                                                )}
+
+                                            </TableCell>
+
+
+                                            {/* ACTIONS */}
+
+                                            <TableCell>
+
+                                                <DropdownMenu
+                                                    trigger={
+
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                        >
+
+                                                            <MoreHorizontal
+                                                                className="h-4 w-4"
+                                                            />
+
+                                                        </Button>
                                                     }
                                                 >
-                                                    <Pencil />
-                                                    Edit
-                                                </DropdownItem>
 
-                                                <DropdownItem
-                                                    onClick={() =>
-                                                        toast.success("Question cloned")
-                                                    }
-                                                >
-                                                    <Copy />
-                                                    Clone
-                                                </DropdownItem>
+                                                    <DropdownItem
+                                                        onClick={() =>
+                                                            setPreview(
+                                                                q
+                                                            )
+                                                        }
+                                                    >
 
-                                                <DropdownItem
-                                                    destructive
-                                                    onClick={() =>
-                                                        toast.warning("Question archived")
-                                                    }
-                                                >
-                                                    <Archive />
-                                                    Archive
-                                                </DropdownItem>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                                        <Filter />
+
+                                                        Preview
+
+                                                    </DropdownItem>
+
+
+                                                    <DropdownItem
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/questions/${q.id}/edit`
+                                                            )
+                                                        }
+                                                    >
+
+                                                        <Pencil />
+
+                                                        Edit
+
+                                                    </DropdownItem>
+
+
+                                                    <DropdownItem
+                                                        onClick={() =>
+                                                            toast.success(
+                                                                "Question cloned"
+                                                            )
+                                                        }
+                                                    >
+
+                                                        <Copy />
+
+                                                        Clone
+
+                                                    </DropdownItem>
+
+
+                                                    <DropdownItem
+                                                        destructive
+                                                        onClick={() =>
+                                                            toast.warning(
+                                                                "Question archived"
+                                                            )
+                                                        }
+                                                    >
+
+                                                        <Archive />
+
+                                                        Archive
+
+                                                    </DropdownItem>
+
+                                                </DropdownMenu>
+
+                                            </TableCell>
+
+                                        </TableRow>
+                                    )
+                                )}
+
                             </TableBody>
+
                         </Table>
 
+
+                        {/* PAGINATION */}
+
                         <div className="border-t px-4">
+
                             <Pagination
                                 page={page}
-                                pageSize={PAGE_SIZE}
-                                total={filtered.length}
-                                onPageChange={setPage}
+                                pageSize={
+                                    PAGE_SIZE
+                                }
+                                total={
+                                    filtered.length
+                                }
+                                onPageChange={
+                                    setPage
+                                }
                             />
+
                         </div>
+
                     </>
                 )}
+
             </Card>
+
+
+            {/* ================================================= */}
+            {/* PREVIEW DRAWER */}
+            {/* ================================================= */}
+
             <Drawer
                 open={!!preview}
                 onOpenChange={(open) => {
-                    if (!open) setPreview(null);
+
+                    if (!open) {
+                        setPreview(null);
+                    }
+
                 }}
                 title={preview?.code}
                 description="Question Preview"
                 width="max-w-md"
             >
+
                 {preview && (
+
                     <div className="space-y-5 p-5">
 
                         <div>
+
                             <p className="text-xs font-medium uppercase text-muted-foreground">
                                 Question
                             </p>
 
+
                             <p className="mt-1 font-medium">
-                                {preview.questionText}
+                                {
+                                    preview.questionText
+                                }
                             </p>
 
+
                             {preview.helpText && (
+
                                 <p className="mt-2 text-sm text-muted-foreground">
-                                    {preview.helpText}
+                                    {
+                                        preview.helpText
+                                    }
                                 </p>
+
                             )}
+
                         </div>
+
 
                         <div className="grid grid-cols-2 gap-4">
 
                             <div>
+
                                 <p className="text-xs uppercase text-muted-foreground">
                                     Code
                                 </p>
-                                <p>{preview.code}</p>
+
+                                <p>
+                                    {
+                                        preview.code
+                                    }
+                                </p>
+
                             </div>
 
+
                             <div>
+
                                 <p className="text-xs uppercase text-muted-foreground">
                                     Type
                                 </p>
-                                <p>{typeLabels[preview.questionType]}</p>
+
+                                <p>
+                                    {
+                                        typeLabels[
+                                            preview.questionType
+                                            ] ??
+                                        preview.questionType
+                                    }
+                                </p>
+
                             </div>
 
+
                             <div>
+
                                 <p className="text-xs uppercase text-muted-foreground">
                                     Weight
                                 </p>
-                                <p>{preview.weight}</p>
+
+                                <p>
+                                    {
+                                        preview.weight
+                                    }
+                                </p>
+
                             </div>
 
+
                             <div>
+
                                 <p className="text-xs uppercase text-muted-foreground">
                                     Mandatory
                                 </p>
-                                <p>{preview.mandatory ? "Yes" : "No"}</p>
+
+                                <p>
+                                    {
+                                        preview.mandatory
+                                            ? "Yes"
+                                            : "No"
+                                    }
+                                </p>
+
                             </div>
 
+
                             <div>
+
                                 <p className="text-xs uppercase text-muted-foreground">
                                     Status
                                 </p>
-                                <StatusBadge status={preview.status} />
+
+                                <StatusBadge
+                                    status={
+                                        preview.status
+                                    }
+                                />
+
                             </div>
 
+
                             <div>
+
                                 <p className="text-xs uppercase text-muted-foreground">
                                     Updated
                                 </p>
-                                <p>{formatDate(preview.updatedAt)}</p>
+
+                                <p>
+                                    {formatDate(
+                                        preview.updatedAt
+                                    )}
+                                </p>
+
                             </div>
 
                         </div>
 
+
                         <Button
                             className="w-full"
                             onClick={() =>
-                                navigate(`/questions/${preview.id}/edit`)
+                                navigate(
+                                    `/questions/${preview.id}/edit`
+                                )
                             }
                         >
-                            <Pencil className="h-4 w-4 mr-2" />
+
+                            <Pencil
+                                className="h-4 w-4 mr-2"
+                            />
+
                             Edit Question
+
                         </Button>
 
                     </div>
                 )}
+
             </Drawer>
+
+
+            {/* ================================================= */}
+            {/* ARCHIVE CONFIRMATION */}
+            {/* ================================================= */}
 
             <ConfirmDialog
                 open={confirmArchive}
-                onOpenChange={setConfirmArchive}
+                onOpenChange={
+                    setConfirmArchive
+                }
                 title="Archive Questions?"
                 description={`${selected.size} question(s) will be archived.`}
                 confirmLabel="Archive"
                 onConfirm={() => {
-                    toast.warning("Questions archived");
-                    setSelected(new Set());
-                    setConfirmArchive(false);
+
+                    toast.warning(
+                        "Questions archived"
+                    );
+
+                    setSelected(
+                        new Set()
+                    );
+
+                    setConfirmArchive(
+                        false
+                    );
                 }}
             />
+
         </>
     );
 }

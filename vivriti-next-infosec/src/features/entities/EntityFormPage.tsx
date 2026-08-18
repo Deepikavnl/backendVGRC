@@ -16,11 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { createEntity } from "@/services/entityService";
 
 export function EntityFormPage() {
-
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-
         name: "",
         type: "",
         category: "",
@@ -30,59 +28,38 @@ export function EntityFormPage() {
         criticality: "",
         riskRating: "",
         status: "",
-        spend: ""
-
+        businessInformation: "",
     });
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
-
         const { name, value } = e.target;
 
         setFormData((prev) => ({
-
             ...prev,
-
-            [name]:
-                name === "spend"
-                    ? value === ""
-                        ? ""
-                        : Number(value)
-                    : value,
-
+            [name]: value,
         }));
-
     };
 
-    const handleSubmit = async (
-        e: React.FormEvent
-    ) => {
-
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-
             await createEntity(formData);
 
             alert("Entity created successfully");
 
             navigate("/entities");
-
         } catch (error) {
-
             console.error(error);
 
             alert("Failed to create entity");
-
         }
-
     };
 
     return (
-
         <>
-
             <PageHeader
                 title="Create Entity"
                 description="Register a new Third-Party Vendor / Supplier"
@@ -97,26 +74,25 @@ export function EntityFormPage() {
                 className="space-y-6"
             >
 
-                {/* ================= GENERAL INFORMATION ================= */}
+                {/* =====================================================
+                    GENERAL INFORMATION
+                ====================================================== */}
 
                 <Card className="shadow-lg border">
-
                     <CardHeader className="border-b bg-slate-50">
-
                         <CardTitle className="text-xl font-bold text-blue-700">
                             General Information
                         </CardTitle>
-
                     </CardHeader>
 
                     <CardContent className="pt-6">
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+                            {/* Entity Name */}
                             <div>
-
                                 <Label className="font-semibold text-blue-700">
-                                    Entity Name <span className="text-red-500">*</span>
+                                    Entity Name{" "}
+                                    <span className="text-red-500">*</span>
                                 </Label>
 
                                 <Input
@@ -127,13 +103,13 @@ export function EntityFormPage() {
                                     className="mt-2"
                                     required
                                 />
-
                             </div>
 
+                            {/* Entity Type */}
                             <div>
-
                                 <Label className="font-semibold text-blue-700">
-                                    Entity Type <span className="text-red-500">*</span>
+                                    Entity Type{" "}
+                                    <span className="text-red-500">*</span>
                                 </Label>
 
                                 <Input
@@ -144,11 +120,10 @@ export function EntityFormPage() {
                                     className="mt-2"
                                     required
                                 />
-
                             </div>
 
+                            {/* Category */}
                             <div>
-
                                 <Label className="font-semibold text-blue-700">
                                     Category
                                 </Label>
@@ -160,11 +135,10 @@ export function EntityFormPage() {
                                     onChange={handleChange}
                                     className="mt-2"
                                 />
-
                             </div>
 
+                            {/* Country */}
                             <div>
-
                                 <Label className="font-semibold text-blue-700">
                                     Country
                                 </Label>
@@ -176,11 +150,10 @@ export function EntityFormPage() {
                                     onChange={handleChange}
                                     className="mt-2"
                                 />
-
                             </div>
 
+                            {/* Website */}
                             <div className="md:col-span-2">
-
                                 <Label className="font-semibold text-blue-700">
                                     Website
                                 </Label>
@@ -192,11 +165,10 @@ export function EntityFormPage() {
                                     onChange={handleChange}
                                     className="mt-2"
                                 />
-
                             </div>
 
+                            {/* Description */}
                             <div className="md:col-span-2">
-
                                 <Label className="font-semibold text-blue-700">
                                     Description
                                 </Label>
@@ -209,34 +181,32 @@ export function EntityFormPage() {
                                     onChange={handleChange}
                                     className="mt-2 resize-none"
                                 />
-
                             </div>
 
                         </div>
-
                     </CardContent>
-
                 </Card>
-                {/* ================= RISK INFORMATION ================= */}
+
+
+                {/* =====================================================
+                    RISK INFORMATION
+                ====================================================== */}
 
                 <Card className="shadow-lg border">
-
                     <CardHeader className="border-b bg-slate-50">
-
                         <CardTitle className="text-xl font-bold text-blue-700">
                             Risk Information
                         </CardTitle>
-
                     </CardHeader>
 
                     <CardContent className="pt-6">
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+                            {/* Criticality */}
                             <div>
-
                                 <Label className="font-semibold text-blue-700">
-                                    Criticality <span className="text-red-500">*</span>
+                                    Criticality{" "}
+                                    <span className="text-red-500">*</span>
                                 </Label>
 
                                 <Input
@@ -247,13 +217,13 @@ export function EntityFormPage() {
                                     className="mt-2"
                                     required
                                 />
-
                             </div>
 
+                            {/* Risk Rating */}
                             <div>
-
                                 <Label className="font-semibold text-blue-700">
-                                    Risk Rating <span className="text-red-500">*</span>
+                                    Risk Rating{" "}
+                                    <span className="text-red-500">*</span>
                                 </Label>
 
                                 <Input
@@ -264,13 +234,13 @@ export function EntityFormPage() {
                                     className="mt-2"
                                     required
                                 />
-
                             </div>
 
+                            {/* Entity Status */}
                             <div className="md:col-span-2">
-
                                 <Label className="font-semibold text-blue-700">
-                                    Entity Status <span className="text-red-500">*</span>
+                                    Entity Status{" "}
+                                    <span className="text-red-500">*</span>
                                 </Label>
 
                                 <Input
@@ -281,81 +251,53 @@ export function EntityFormPage() {
                                     className="mt-2"
                                     required
                                 />
-
                             </div>
 
                         </div>
-
                     </CardContent>
-
                 </Card>
 
 
-                {/* ================= BUSINESS INFORMATION ================= */}
+                {/* =====================================================
+                    BUSINESS INFORMATION
+                ====================================================== */}
 
                 <Card className="shadow-lg border">
-
                     <CardHeader className="border-b bg-slate-50">
-
                         <CardTitle className="text-xl font-bold text-blue-700">
                             Business Information
                         </CardTitle>
-
                     </CardHeader>
 
                     <CardContent className="pt-6">
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <Label className="font-semibold text-blue-700">
+                                Company Information
+                            </Label>
 
-                            <div>
-
-                                <Label className="font-semibold text-blue-700">
-                                    Annual Spend
-                                </Label>
-
-                                <div className="relative mt-2">
-
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">
-                                        ₹
-                                    </span>
-
-                                    <Input
-                                        name="spend"
-                                        type="number"
-                                        min="0"
-                                        placeholder="Enter annual spend"
-                                        value={formData.spend}
-                                        onChange={handleChange}
-                                        className="pl-8"
-                                    />
-
-                                </div>
-
-                                <p className="mt-2 text-xs text-muted-foreground">
-                                    Total annual contract value with this third-party organization.
-                                </p>
-
-                            </div>
-
+                            <Textarea
+                                name="businessInformation"
+                                rows={5}
+                                placeholder=""
+                                value={formData.businessInformation || ""}
+                                onChange={handleChange}
+                                className="mt-2 resize-none"
+                            />
                         </div>
 
                     </CardContent>
-
                 </Card>
 
 
-                {/* ================= ENTITY SUMMARY ================= */}
-
-
-
-                {/* ================= ACTION BUTTONS ================= */}
+                {/* =====================================================
+                    ACTION BUTTONS
+                ====================================================== */}
 
                 <Card className="shadow-lg border">
-
                     <CardContent className="flex items-center justify-between p-6">
 
                         <div>
-
                             <h3 className="font-semibold text-slate-800">
                                 Ready to Create?
                             </h3>
@@ -363,7 +305,6 @@ export function EntityFormPage() {
                             <p className="text-sm text-muted-foreground">
                                 Verify the information before creating the entity.
                             </p>
-
                         </div>
 
                         <div className="flex gap-3">
@@ -386,13 +327,9 @@ export function EntityFormPage() {
                         </div>
 
                     </CardContent>
-
                 </Card>
 
             </form>
-
         </>
-
     );
-
 }

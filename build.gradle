@@ -27,7 +27,8 @@ dependencies {
 
     // Validation (FIXES jakarta.validation)
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-
+    implementation 'org.apache.poi:poi:5.4.1'
+    implementation 'org.apache.poi:poi-ooxml:5.4.1'
     // Security (FIXES SecurityFilterChain)
     implementation 'org.springframework.boot:spring-boot-starter-security'
 

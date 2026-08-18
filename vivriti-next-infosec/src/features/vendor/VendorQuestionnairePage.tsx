@@ -254,6 +254,7 @@ export function VendorQuestionnairePage() {
                 const lockedStatuses = [
                     "SUBMITTED",
                     "UNDER_REVIEW",
+                    "CORRECTION_SUBMITTED",
                     "APPROVED",
                     "REJECTED",
                     "COMPLETED"

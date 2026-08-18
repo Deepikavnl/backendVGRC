@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -22,15 +23,21 @@ import {
     Plus,
     Search,
     Eye,
-    Trash2
+    Trash2,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 
 import { toast } from "@/store/toast";
 
 
+const ITEMS_PER_PAGE = 10;
+
+
 export function AssessmentPage() {
 
     const navigate = useNavigate();
+
 
     const [assessments, setAssessments] =
         useState<Assessment[]>([]);
@@ -40,6 +47,13 @@ export function AssessmentPage() {
 
     const [search, setSearch] =
         useState<string>("");
+
+
+    /*
+     * CURRENT PAGE
+     */
+    const [currentPage, setCurrentPage] =
+        useState<number>(1);
 
 
     /*
@@ -54,6 +68,7 @@ export function AssessmentPage() {
             const data =
                 await assessmentApi.getAllAssessments();
 
+
             setAssessments(
                 Array.isArray(data)
                     ? data
@@ -67,7 +82,9 @@ export function AssessmentPage() {
                 error
             );
 
+
             setAssessments([]);
+
 
             toast.error(
                 "Failed to load assessments"
@@ -92,7 +109,7 @@ export function AssessmentPage() {
 
 
     /*
-     * SEARCH
+     * SEARCH + SORT
      */
     const filteredAssessments =
         useMemo(() => {
@@ -103,29 +120,112 @@ export function AssessmentPage() {
                     .trim();
 
 
-            return assessments.filter(
-                (assessment) => {
+            const filtered =
+                assessments.filter(
+                    (assessment) => {
 
-                    const searchableText =
-                        `
-                        ${assessment.code ?? ""}
-                        ${assessment.entityName ?? ""}
-                        ${assessment.templateName ?? ""}
-                        ${assessment.reviewerName ?? ""}
-                        ${assessment.status ?? ""}
-                        `
-                            .toLowerCase();
+                        const searchableText =
+                            `
+${assessment.code ?? ""}
+${assessment.entityName ?? ""}
+${assessment.templateName ?? ""}
+${assessment.reviewerName ?? ""}
+${assessment.status ?? ""}
+`
+                                .toLowerCase();
 
 
-                    return searchableText.includes(
-                        searchText
-                    );
-                }
+                        return searchableText.includes(
+                            searchText
+                        );
+                    }
+                );
+
+
+            /*
+             * NEWEST FIRST
+             *
+             * Higher database ID = newer assessment.
+             */
+            return [...filtered].sort(
+                (a, b) =>
+                    Number(b.id) -
+                    Number(a.id)
             );
 
         }, [
             assessments,
             search
+        ]);
+
+
+    /*
+     * TOTAL PAGES
+     */
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                filteredAssessments.length /
+                ITEMS_PER_PAGE
+            )
+        );
+
+
+    /*
+     * RESET TO PAGE 1
+     * WHEN SEARCH CHANGES
+     */
+    useEffect(() => {
+
+        setCurrentPage(1);
+
+    }, [search]);
+
+
+    /*
+     * MAKE SURE CURRENT PAGE
+     * IS STILL VALID AFTER DELETE
+     */
+    useEffect(() => {
+
+        if (currentPage > totalPages) {
+
+            setCurrentPage(
+                totalPages
+            );
+        }
+
+    }, [
+        currentPage,
+        totalPages
+    ]);
+
+
+    /*
+     * PAGINATED DATA
+     */
+    const paginatedAssessments =
+        useMemo(() => {
+
+            const startIndex =
+                (currentPage - 1) *
+                ITEMS_PER_PAGE;
+
+
+            const endIndex =
+                startIndex +
+                ITEMS_PER_PAGE;
+
+
+            return filteredAssessments.slice(
+                startIndex,
+                endIndex
+            );
+
+        }, [
+            filteredAssessments,
+            currentPage
         ]);
 
 
@@ -174,6 +274,25 @@ export function AssessmentPage() {
             );
         }
     };
+
+
+    /*
+     * PAGE RANGE
+     */
+    const startItem =
+        filteredAssessments.length === 0
+            ? 0
+            : (currentPage - 1) *
+                  ITEMS_PER_PAGE +
+              1;
+
+
+    const endItem =
+        Math.min(
+            currentPage *
+                ITEMS_PER_PAGE,
+            filteredAssessments.length
+        );
 
 
     return (
@@ -300,11 +419,11 @@ export function AssessmentPage() {
                     {/* ASSESSMENTS */}
 
                     {!loading &&
-                        filteredAssessments.length > 0 && (
+                        paginatedAssessments.length > 0 && (
 
                             <div className="space-y-4">
 
-                                {filteredAssessments.map(
+                                {paginatedAssessments.map(
                                     (assessment) => (
 
                                         <div
@@ -553,6 +672,137 @@ export function AssessmentPage() {
 
                         )}
 
+
+                    {/* PAGINATION */}
+
+                    {!loading &&
+                        filteredAssessments.length > 0 && (
+
+                            <div className="
+                                mt-6
+                                flex
+                                flex-col
+                                gap-4
+                                border-t
+                                pt-5
+                                sm:flex-row
+                                sm:items-center
+                                sm:justify-between
+                            ">
+
+                                {/* COUNT */}
+
+                                <p className="
+                                    text-sm
+                                    text-muted-foreground
+                                ">
+
+                                    Showing{" "}
+                                    <span className="font-medium text-foreground">
+                                        {startItem}
+                                    </span>
+                                    {" - "}
+                                    <span className="font-medium text-foreground">
+                                        {endItem}
+                                    </span>
+                                    {" of "}
+                                    <span className="font-medium text-foreground">
+                                        {filteredAssessments.length}
+                                    </span>
+                                    {" assessments"}
+
+                                </p>
+
+
+                                {/* PAGINATION BUTTONS */}
+
+                                <div className="
+                                    flex
+                                    items-center
+                                    gap-2
+                                ">
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={
+                                            currentPage === 1
+                                        }
+                                        onClick={() =>
+                                            setCurrentPage(
+                                                (page) =>
+                                                    Math.max(
+                                                        1,
+                                                        page - 1
+                                                    )
+                                            )
+                                        }
+                                    >
+
+                                        <ChevronLeft
+                                            className="
+                                                mr-1
+                                                h-4
+                                                w-4
+                                            "
+                                        />
+
+                                        Previous
+
+                                    </Button>
+
+
+                                    <div className="
+                                        min-w-[90px]
+                                        text-center
+                                        text-sm
+                                        font-medium
+                                    ">
+
+                                        Page{" "}
+                                        {currentPage}
+                                        {" of "}
+                                        {totalPages}
+
+                                    </div>
+
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={
+                                            currentPage >=
+                                            totalPages
+                                        }
+                                        onClick={() =>
+                                            setCurrentPage(
+                                                (page) =>
+                                                    Math.min(
+                                                        totalPages,
+                                                        page + 1
+                                                    )
+                                            )
+                                        }
+                                    >
+
+                                        Next
+
+                                        <ChevronRight
+                                            className="
+                                                ml-1
+                                                h-4
+                                                w-4
+                                            "
+                                        />
+
+                                    </Button>
+
+                                </div>
+
+                            </div>
+
+                        )}
+
                 </CardContent>
 
             </Card>
@@ -561,3 +811,4 @@ export function AssessmentPage() {
 
     );
 }
+

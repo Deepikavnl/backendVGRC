@@ -15,6 +15,7 @@ import { StatCard } from "@/components/common/stat-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+
 import {
     Table,
     TableHeader,
@@ -23,15 +24,19 @@ import {
     TableHead,
     TableCell,
 } from "@/components/ui/table";
+
 import { Pagination } from "@/components/ui/pagination";
+
 import {
     RiskBadge,
     StatusBadge,
 } from "@/components/common/status-badge";
+
 import {
     DropdownMenu,
     DropdownItem,
 } from "@/components/ui/dropdown-menu";
+
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { exportToCSV } from "@/lib/export";
@@ -55,44 +60,206 @@ export function FindingsPage() {
 
     const [page, setPage] = useState(1);
 
-    const [detail, setDetail] = useState<Finding | null>(null);
+    // =========================================================
+    // LOAD FINDINGS
+    // =========================================================
 
     useEffect(() => {
-        findingApi
-            .getAllFindings()
-            .then((response: any) => {
-                setFindings(response.data);
-            })
-            .catch((error: any) => {
-                console.error("Failed loading findings", error);
-            })
-            .finally(() => {
+        const loadFindings = async () => {
+            try {
+                setLoading(true);
+
+                const response: any =
+                    await findingApi.getAllFindings();
+
+                console.log("Findings API response:", response);
+
+                /*
+                 * Backend may return:
+                 *
+                 * 1. Array
+                 * [
+                 *   {...},
+                 *   {...}
+                 * ]
+                 *
+                 * 2. Axios response
+                 * {
+                 *   data: [...]
+                 * }
+                 *
+                 * 3. Page response
+                 * {
+                 *   content: [...]
+                 * }
+                 */
+
+                let findingList: Finding[] = [];
+
+                if (Array.isArray(response)) {
+                    findingList = response;
+                } else if (
+                    response &&
+                    Array.isArray(response.data)
+                ) {
+                    findingList = response.data;
+                } else if (
+                    response &&
+                    Array.isArray(response.content)
+                ) {
+                    findingList = response.content;
+                } else if (
+                    response &&
+                    response.data &&
+                    Array.isArray(response.data.content)
+                ) {
+                    findingList = response.data.content;
+                }
+
+                console.log(
+                    "Normalized findings:",
+                    findingList
+                );
+
+                setFindings(findingList);
+            } catch (error) {
+                console.error(
+                    "Failed loading findings",
+                    error
+                );
+
+                setFindings([]);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        loadFindings();
     }, []);
+
+    // =========================================================
+    // FILTER + NEWEST FIRST SORTING
+    // =========================================================
+
     const filtered = useMemo(() => {
-        return findings.filter((f) => {
+        const searchText =
+            search.trim().toLowerCase();
+
+        const result = findings.filter((f: any) => {
+            const title =
+                String(f.title ?? "").toLowerCase();
+
+            const entityName =
+                String(f.entityName ?? "").toLowerCase();
+
+            const code =
+                String(f.code ?? "").toLowerCase();
+
+            const topic =
+                String(f.topic ?? "").toLowerCase();
+
             const matchesSearch =
-                !search ||
-                f.title.toLowerCase().includes(search.toLowerCase()) ||
-                (f.entityName ?? "")
-                    .toLowerCase()
-                    .includes(search.toLowerCase());
+                !searchText ||
+                title.includes(searchText) ||
+                entityName.includes(searchText) ||
+                code.includes(searchText) ||
+                topic.includes(searchText);
 
             const matchesSeverity =
-                !sev || String(f.severity).toUpperCase() === sev;
+                !sev ||
+                String(f.severity ?? "").toUpperCase() ===
+                sev;
 
             const matchesStatus =
-                !status || String(f.status).toUpperCase() === status;
+                !status ||
+                String(f.status ?? "").toUpperCase() ===
+                status;
 
-            return matchesSearch && matchesSeverity && matchesStatus;
+            return (
+                matchesSearch &&
+                matchesSeverity &&
+                matchesStatus
+            );
         });
-    }, [findings, search, sev, status]);
 
-    const pageData = filtered.slice(
-        (page - 1) * PAGE_SIZE,
-        page * PAGE_SIZE
-    );
+        /*
+         * IMPORTANT:
+         *
+         * Sort newest created finding first.
+         *
+         * createdAt DESC
+         *
+         * Example:
+         *
+         * 2026-08-17  -> first
+         * 2026-08-16  -> second
+         * 2026-08-15  -> third
+         *
+         * If createdAt is missing or equal,
+         * use the ID as a fallback.
+         */
+
+        return result.sort((a: any, b: any) => {
+            const dateA = a.createdAt
+                ? new Date(a.createdAt).getTime()
+                : 0;
+
+            const dateB = b.createdAt
+                ? new Date(b.createdAt).getTime()
+                : 0;
+
+            if (dateB !== dateA) {
+                return dateB - dateA;
+            }
+
+            // Fallback: latest/highest ID first
+            return (
+                Number(b.id ?? 0) -
+                Number(a.id ?? 0)
+            );
+        });
+    }, [
+        findings,
+        search,
+        sev,
+        status,
+    ]);
+
+    // =========================================================
+    // RESET PAGINATION WHEN FILTER CHANGES
+    // =========================================================
+
+    useEffect(() => {
+        setPage(1);
+    }, [
+        search,
+        sev,
+        status,
+    ]);
+
+    // =========================================================
+    // PAGINATION
+    // =========================================================
+
+    const pageData = useMemo(() => {
+        const start =
+            (page - 1) * PAGE_SIZE;
+
+        const end =
+            start + PAGE_SIZE;
+
+        return filtered.slice(
+            start,
+            end
+        );
+    }, [
+        filtered,
+        page,
+    ]);
+
+    // =========================================================
+    // STATS
+    // =========================================================
 
     const stats = [
         {
@@ -104,7 +271,11 @@ export function FindingsPage() {
         {
             label: "Critical",
             value: findings.filter(
-                (f) => String(f.severity).toUpperCase() === "CRITICAL"
+                (f: any) =>
+                    String(
+                        f.severity ?? ""
+                    ).toUpperCase() ===
+                    "CRITICAL"
             ).length,
             icon: ShieldAlert,
             accent: "red" as const,
@@ -112,7 +283,11 @@ export function FindingsPage() {
         {
             label: "Open",
             value: findings.filter(
-                (f) => String(f.status).toUpperCase() === "OPEN"
+                (f: any) =>
+                    String(
+                        f.status ?? ""
+                    ).toUpperCase() ===
+                    "OPEN"
             ).length,
             icon: AlertTriangle,
             accent: "amber" as const,
@@ -120,20 +295,34 @@ export function FindingsPage() {
         {
             label: "Resolved",
             value: findings.filter(
-                (f) => String(f.status).toUpperCase() === "RESOLVED"
+                (f: any) =>
+                    String(
+                        f.status ?? ""
+                    ).toUpperCase() ===
+                    "RESOLVED"
             ).length,
             icon: AlertTriangle,
             accent: "green" as const,
         },
     ];
 
+    // =========================================================
+    // LOADING
+    // =========================================================
+
     if (loading) {
         return (
             <div className="flex items-center justify-center p-10">
-                Loading findings...
+                <p className="text-sm text-muted-foreground">
+                    Loading findings...
+                </p>
             </div>
         );
     }
+
+    // =========================================================
+    // UI
+    // =========================================================
 
     return (
         <>
@@ -151,15 +340,36 @@ export function FindingsPage() {
                         onClick={() =>
                             exportToCSV(
                                 "findings",
-                                filtered.map((f) => ({
-                                    Code: f.code,
-                                    Title: f.title,
-                                    Entity: f.entityName,
-                                    Severity: String(f.severity),
-                                    Status: String(f.status),
-                                    Owner: f.owner,
-                                    Due: formatDate(f.dueDate),
-                                }))
+                                filtered.map(
+                                    (f: any) => ({
+                                        Code: f.code,
+                                        Title: f.title,
+                                        Entity:
+                                        f.entityName,
+                                        Severity:
+                                            String(
+                                                f.severity ??
+                                                ""
+                                            ),
+                                        Status:
+                                            String(
+                                                f.status ??
+                                                ""
+                                            ),
+                                        Owner:
+                                        f.owner,
+                                        Due:
+                                            formatDate(
+                                                f.dueDate
+                                            ),
+                                        Created:
+                                            f.createdAt
+                                                ? formatDate(
+                                                    f.createdAt
+                                                )
+                                                : "",
+                                    })
+                                )
                             )
                         }
                     >
@@ -169,6 +379,10 @@ export function FindingsPage() {
                 }
             />
 
+            {/* =====================================================
+                STAT CARDS
+            ===================================================== */}
+
             <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
                 {stats.map((stat) => (
                     <StatCard
@@ -177,6 +391,10 @@ export function FindingsPage() {
                     />
                 ))}
             </div>
+
+            {/* =====================================================
+                FILTERS
+            ===================================================== */}
 
             <Toolbar>
                 <SearchInput
@@ -235,6 +453,10 @@ export function FindingsPage() {
                                 value: "IN_REMEDIATION",
                             },
                             {
+                                label: "Remediation Submitted",
+                                value: "REMEDIATION_SUBMITTED",
+                            },
+                            {
                                 label: "Resolved",
                                 value: "RESOLVED",
                             },
@@ -246,6 +468,11 @@ export function FindingsPage() {
                     />
                 </div>
             </Toolbar>
+
+            {/* =====================================================
+                EMPTY STATE
+            ===================================================== */}
+
             {filtered.length === 0 ? (
                 <EmptyState
                     icon={AlertTriangle}
@@ -257,87 +484,170 @@ export function FindingsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Code</TableHead>
-                                <TableHead>Finding</TableHead>
-                                <TableHead>Entity</TableHead>
-                                <TableHead>Severity</TableHead>
-                                <TableHead>Owner</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead className="w-10"></TableHead>
+                                <TableHead>
+                                    Code
+                                </TableHead>
+
+                                <TableHead>
+                                    Finding
+                                </TableHead>
+
+                                <TableHead>
+                                    Entity
+                                </TableHead>
+
+                                <TableHead>
+                                    Severity
+                                </TableHead>
+
+                                <TableHead>
+                                    Owner
+                                </TableHead>
+
+                                <TableHead>
+                                    Status
+                                </TableHead>
+
+                                <TableHead>
+                                    Due Date
+                                </TableHead>
+
+                                <TableHead>
+                                    Created
+                                </TableHead>
+
+                                <TableHead className="w-10">
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
-                            {pageData.map((f) => (
-                                <TableRow
-                                    key={f.id}
-                                    className="cursor-pointer"
-                                    onClick={() => navigate(`/findings/${f.id}`)}
-                                >
-                                    <TableCell className="font-mono text-xs">
-                                        {f.code}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <div className="max-w-xs">
-                                            <p className="truncate font-medium">
-                                                {f.title}
-                                            </p>
-
-                                            <p className="text-xs text-muted-foreground">
-                                                {f.topic}
-                                            </p>
-                                        </div>
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {f.entityName}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <RiskBadge level={f.severity} />
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {f.owner}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <StatusBadge status={f.status} />
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {formatDate(f.dueDate)}
-                                    </TableCell>
-
-                                    <TableCell
-                                        onClick={(e) => e.stopPropagation()}
+                            {pageData.map(
+                                (f: any) => (
+                                    <TableRow
+                                        key={f.id}
+                                        className="cursor-pointer"
+                                        onClick={() =>
+                                            navigate(
+                                                `/findings/${f.id}`
+                                            )
+                                        }
                                     >
-                                        <DropdownMenu
-                                            trigger={
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
+                                        {/* CODE */}
+
+                                        <TableCell className="font-mono text-xs">
+                                            {f.code ||
+                                                `FND-${f.id}`}
+                                        </TableCell>
+
+                                        {/* FINDING */}
+
+                                        <TableCell>
+                                            <div className="max-w-xs">
+                                                <p className="truncate font-medium">
+                                                    {f.title}
+                                                </p>
+
+                                                <p className="text-xs text-muted-foreground">
+                                                    {f.topic ||
+                                                        "-"}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+
+                                        {/* ENTITY */}
+
+                                        <TableCell>
+                                            {f.entityName ||
+                                                f.entity?.name ||
+                                                "-"}
+                                        </TableCell>
+
+                                        {/* SEVERITY */}
+
+                                        <TableCell>
+                                            <RiskBadge
+                                                level={
+                                                    f.severity
+                                                }
+                                            />
+                                        </TableCell>
+
+                                        {/* OWNER */}
+
+                                        <TableCell>
+                                            {f.owner ||
+                                                "-"}
+                                        </TableCell>
+
+                                        {/* STATUS */}
+
+                                        <TableCell>
+                                            <StatusBadge
+                                                status={
+                                                    f.status
+                                                }
+                                            />
+                                        </TableCell>
+
+                                        {/* DUE DATE */}
+
+                                        <TableCell>
+                                            {f.dueDate
+                                                ? formatDate(
+                                                    f.dueDate
+                                                )
+                                                : "-"}
+                                        </TableCell>
+
+                                        {/* CREATED */}
+
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {f.createdAt
+                                                ? formatDate(
+                                                    f.createdAt
+                                                )
+                                                : "-"}
+                                        </TableCell>
+
+                                        {/* ACTIONS */}
+
+                                        <TableCell
+                                            onClick={(e) =>
+                                                e.stopPropagation()
                                             }
                                         >
-                                            <DropdownItem
-                                                onClick={() =>
-                                                    navigate(`/findings/${f.id}`)
+                                            <DropdownMenu
+                                                trigger={
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                    >
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
                                                 }
                                             >
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                View
-                                            </DropdownItem>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                                <DropdownItem
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/findings/${f.id}`
+                                                        )
+                                                    }
+                                                >
+                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    View
+                                                </DropdownItem>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            )}
                         </TableBody>
                     </Table>
+
+                    {/* =================================================
+                        PAGINATION
+                    ================================================= */}
 
                     <div className="border-t px-4 py-3">
                         <Pagination
@@ -348,6 +658,30 @@ export function FindingsPage() {
                         />
                     </div>
                 </Card>
+            )}
+
+            {/* =====================================================
+                RESULT SUMMARY
+            ===================================================== */}
+
+            {filtered.length > 0 && (
+                <div className="mt-3 text-xs text-muted-foreground">
+                    Showing{" "}
+                    {Math.min(
+                        (page - 1) *
+                        PAGE_SIZE +
+                        1,
+                        filtered.length
+                    )}{" "}
+                    -{" "}
+                    {Math.min(
+                        page *
+                        PAGE_SIZE,
+                        filtered.length
+                    )}{" "}
+                    of{" "}
+                    {filtered.length} findings
+                </div>
             )}
         </>
     );
