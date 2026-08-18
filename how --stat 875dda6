@@ -1,0 +1,163 @@
+[33mcommit 875dda6e23dd8f9a5eaa0f4738fffbe1e2cff55e[m
+Author: Your Name <your.email@example.com>
+Date:   Fri Aug 7 18:59:41 2026 +0530
+
+    Added topic and question excel import changes
+
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/dto/response/TopicQuestionResponse.java b/src/main/java/com/tspmquestionmaster/dto/response/TopicQuestionResponse.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2a23daa[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/dto/response/TopicQuestionResponse.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.dto.response;[m
+[32m+[m
+[32m+[m[32mpublic class TopicQuestionResponse {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/ExcelTemplateService.java b/src/main/java/com/tspmquestionmaster/service/ExcelTemplateService.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2aaf6fd[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/ExcelTemplateService.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service;[m
+[32m+[m
+[32m+[m[32mpublic class ExcelTemplateService {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/QuestionImportService.java b/src/main/java/com/tspmquestionmaster/service/QuestionImportService.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..de0051d[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/QuestionImportService.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service;[m
+[32m+[m
+[32m+[m[32mpublic class QuestionImportService {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/TemplateExportService.java b/src/main/java/com/tspmquestionmaster/service/TemplateExportService.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..37bd118[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/TemplateExportService.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service;[m
+[32m+[m
+[32m+[m[32mpublic class TemplateExportService {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/TopicImportService.java b/src/main/java/com/tspmquestionmaster/service/TopicImportService.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c5e1e16[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/TopicImportService.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service;[m
+[32m+[m
+[32m+[m[32mpublic class TopicImportService {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/impl/ExcelTemplateServiceImpl.java b/src/main/java/com/tspmquestionmaster/service/impl/ExcelTemplateServiceImpl.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0f23d72[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/impl/ExcelTemplateServiceImpl.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service.impl;[m
+[32m+[m
+[32m+[m[32mpublic class ExcelTemplateServiceImpl {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/impl/QuestionImportServiceImpl.java b/src/main/java/com/tspmquestionmaster/service/impl/QuestionImportServiceImpl.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..f19bf07[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/impl/QuestionImportServiceImpl.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service.impl;[m
+[32m+[m
+[32m+[m[32mpublic class QuestionImportServiceImpl {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/impl/TemplateExportServiceImpl.java b/src/main/java/com/tspmquestionmaster/service/impl/TemplateExportServiceImpl.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..8e2a4b5[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/impl/TemplateExportServiceImpl.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service.impl;[m
+[32m+[m
+[32m+[m[32mpublic class TemplateExportServiceImpl {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/tspmquestionmaster/service/impl/TopicImportServiceImpl.java b/src/main/java/com/tspmquestionmaster/service/impl/TopicImportServiceImpl.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5293b4c[m
+[1m--- /dev/null[m
+[1m+++ b/src/main/java/com/tspmquestionmaster/service/impl/TopicImportServiceImpl.java[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32mpackage com.tspmquestionmaster.service.impl;[m
+[32m+[m
+[32m+[m[32mpublic class TopicImportServiceImpl {[m
+[32m+[m[32m}[m
+[1mdiff --git a/vivriti-next-infosec/src/features/audit/AuditLogsPage.tsx b/vivriti-next-infosec/src/features/audit/AuditLogsPage.tsx[m
+[1mindex b6024e6..90e76eb 100644[m
+[1m--- a/vivriti-next-infosec/src/features/audit/AuditLogsPage.tsx[m
+[1m+++ b/vivriti-next-infosec/src/features/audit/AuditLogsPage.tsx[m
+[36m@@ -1,63 +1,585 @@[m
+ import { useMemo, useState } from "react";[m
+[31m-import { Download, ScrollText, Lock } from "lucide-react";[m
+[32m+[m
+[32m+[m[32mimport {[m
+[32m+[m[32m    Download,[m
+[32m+[m[32m    ScrollText,[m
+[32m+[m[32m    Lock[m
+[32m+[m[32m} from "lucide-react";[m
+[32m+[m
+ import { PageHeader } from "@/components/common/page-header";[m
+[31m-import { Toolbar, SearchInput } from "@/components/common/toolbar";[m
+[32m+[m[32mimport {[m
+[32m+[m[32m    Toolbar,[m
+[32m+[m[32m    SearchInput[m
+[32m+[m[32m} from "@/components/common/toolbar";[m
+[32m+[m
+ import { Card } from "@/components/ui/card";[m
+ import { Button } from "@/components/ui/button";[m
+ import { Badge } from "@/components/ui/badge";[m
+ import { Select } from "@/components/ui/select";[m
+ import { Avatar } from "@/components/ui/avatar";[m
+[31m-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";[m
+[32m+[m
+[32m+[m[32mimport {[m
+[32m+[m[32m    Table,[m
+[32m+[m[32m    TableHeader,[m
+[32m+[m[32m    TableBody,[m
+[32m+[m[32m    TableRow,[m
+[32m+[m[32m    TableHead,[m
+[32m+[m[32m    TableCell[m
+[32m+[m[32m} from "@/components/ui/table";[m
+[32m+[m
+ import { Pagination } from "@/components/ui/pagination";[m
+ import { EmptyState } from "@/components/ui/empty-state";[m
+[32m+[m
+ import { auditLogs } from "@/data/mock";[m
+[32m+[m
+ import { exportToCSV } from "@/lib/export";[m
+ import { formatDateTime } from "@/lib/utils";[m
+ [m
+[32m+[m
+ const PAGE_SIZE = 15;[m
+ [m
+[32m+[m
+ export function AuditLogsPage() {[m
+[31m-  const [search, setSearch] = useState("");[m
+[31m-  const [module, setModule] = useState("");[m
+[31m-  const [page, setPage] = useState(1);[m
+[31m-  const modules = Array.from(new Set(auditLogs.map((l) => l.module)));[m
+[31m-[m
+[31m-  const filtered = useMemo(() => auditLogs.filter((l) =>[m
+[31m-    (!search || l.user.toLowerCase().includes(search.toLowerCase()) || l.action.toLowerCase().includes(search.toLowerCase()) || l.entity.toLowerCase().includes(search.toLowerCase())) &&[m
+[31m-    (!module || l.module === module)[m
+[31m-  ), [search, module]);[m
+[31m-  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);[m
+[31m-[m
+[31m-  return ([m
+[31m-    <>[m
+[31m-      <PageHeader title="Audit Logs" description="Immutable record of every action across the platform." breadcrumbs={[{ label: "Audit Logs" }]}[m
+[31m-        actions={<Button variant="outline" onClick={() => exportToCSV("audit_logs", filtered.map((l) => ({ Timestamp: formatDateTime(l.timestamp), User: l.user, Role: l.userRole, Action: l.action, Module: l.module, Entity: l.entity, Previous: l.previousValue ?? "", New: l.newValue ?? "", IP: l.ip })))}><Download className="h-4 w-4" /> Export</Button>} />[m
+[31m-[m
+[31m-      <div className="mb-4 flex items-center gap-2 rounded-lg border bg-accent/40 px-4 py-2.5 text-sm text-muted-foreground"><Lock className="h-4 w-4 text-primary" /> Audit records are append-only and cannot
